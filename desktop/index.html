@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="tr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"><meta name="theme-color" content="#f4ead5"><meta name="mobile-web-app-capable" content="yes">
+<title>Metro A.Ş. – İstanbul</title>
+<style>
+:root{--bg:#f4ead5;--fg:#2b2a4c;--card:#fffaf0;--water:#a9d6d9;--land:#f0dfbd;--road:#d9c49a;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#15162b;--fg:#f3e9d2;--card:#1f2142;--water:#0f2b3d;--land:#27233f;--road:#3d3860}}
+:root[data-theme="dark"]{--bg:#15162b;--fg:#f3e9d2;--card:#1f2142;--water:#0f2b3d;--land:#27233f;--road:#3d3860}
+html,body{height:100%;margin:0;background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
+body{display:flex;flex-direction:column;overflow:hidden}
+#hud{display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center;padding:8px 12px;background:var(--card);font-size:14px;border-bottom:2px solid var(--road);font-family:Georgia,'Times New Roman',serif}
+#hud b{font-size:16px}
+#hud button{border:0;border-radius:6px;padding:5px 9px;color:#fff;font-weight:600;cursor:pointer}
+#spd{margin-left:auto;display:flex;gap:4px;align-items:center}
+.sb{background:#6b5f5f;min-width:34px}.sb.on{background:#d8432a}
+#tip{display:none;align-items:center;gap:10px;padding:7px 12px;background:#f3e6c4;color:#241a10;border-bottom:2px solid #c9a24b;font:600 14px/1.35 Georgia,'Times New Roman',serif}
+#tip span{flex:1}
+#tip button{border:1px solid #241a10;background:transparent;color:#241a10;border-radius:50%;width:26px;height:26px;cursor:pointer;padding:0}
+#wrap{position:relative;flex:1;min-height:0}
+canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none;display:block}
+#msg{position:absolute;left:0;right:0;top:8px;text-align:center;font-size:14px;pointer-events:none;padding:0 12px}
+#msg span{background:#f3e6c4;color:#241a10;border:1px solid #3a2a18;border-radius:2px;box-shadow:2px 3px 0 rgba(0,0,0,.35);font-family:Georgia,'Times New Roman',serif;padding:6px 12px;display:inline-block;line-height:1.4}
+#ov{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.45);text-align:center;padding:20px;z-index:8}
+#ov>div{background:var(--card);border-radius:12px;padding:22px;max-width:380px;max-height:92%;overflow:auto;line-height:1.5;font-size:14px}
+#ov button{margin-top:10px;border:0;border-radius:8px;padding:10px 18px;background:#e2431f;color:#fff;font-weight:700;font-size:15px;cursor:pointer}
+#ov ol{text-align:left;margin:8px 0 8px 18px;padding:0}
+#menu{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:var(--bg);padding:20px;overflow:auto;text-align:center;z-index:7;background-image:radial-gradient(circle at 1px 1px,var(--road) 1.2px,transparent 1.6px);background-size:22px 22px}
+#menu h1,#menu h2,#menu p{margin:0}
+#menu h1{font:700 38px Georgia,'Times New Roman',serif;letter-spacing:1px}
+#menu h2{font:700 26px Georgia,'Times New Roman',serif}
+#menu p{letter-spacing:4px;font-size:12px;opacity:.7}
+.mb{border-radius:4px;border:2px solid var(--fg);box-shadow:3px 3px 0 var(--fg);padding:12px 18px;background:var(--card);color:var(--fg);font-size:16px;font-weight:600;min-width:220px;cursor:pointer}
+.mb.on{background:#e2431f;color:#fff}.mb.sm{min-width:0;padding:8px 12px;font-size:14px;margin:2px}
+.mb.big{background:#c9a24b;color:#241a10;font-size:17px;padding:14px 18px;width:100%;box-sizing:border-box}
+.card{background:var(--card);border:1px solid var(--road);border-radius:6px;padding:12px 16px;max-width:340px;width:100%;line-height:1.5;box-sizing:border-box;font-size:14px}
+#mg{position:absolute;inset:0;display:none;flex-direction:column;gap:8px;padding:10px 10px 84px;overflow:auto;z-index:2;background:#2a1d14 repeating-linear-gradient(90deg,rgba(255,255,255,.025) 0 2px,transparent 2px 6px)}
+#mg .tabs{display:flex;gap:4px;flex-wrap:wrap;position:sticky;top:-10px;background:#2a1d14;border-bottom:1px solid #c9a24b;padding:6px 0;z-index:3}
+#mg .card{max-width:none;text-align:left;line-height:1.9}
+#mg .mb{background:#f3e6c4;color:#241a10;border:2px solid #c9a24b;box-shadow:2px 2px 0 #000}
+#mg .mb.on{background:#c9a24b}
+#mg .mb.big{background:#c9a24b;border-color:#f3e6c4}
+#mg select{border-radius:5px;border:2px solid var(--fg);background:var(--card);color:var(--fg);font-size:13px;max-width:100%}
+#ds{position:absolute;inset:0;display:none;flex-direction:column;z-index:3;color:#fff;background-color:#1f5fc4;background-image:linear-gradient(rgba(255,255,255,.13) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.13) 1px,transparent 1px);background-size:24px 24px;font-family:'Arial Narrow',Arial,sans-serif}
+#ds .dh{display:flex;justify-content:flex-end;padding:10px 14px;font-size:14px}
+#ds input{background:transparent;border:0;border-bottom:1px solid #fff;color:#fff;font-size:14px;width:120px}
+#ds .dm{flex:1;display:flex;flex-wrap:wrap;gap:12px;padding:8px 16px;overflow:auto;align-content:flex-start}
+#ds .dleft{min-width:200px}#ds .dc{flex:1;min-width:260px;text-align:center}
+#ds .dl{margin:0 0 14px;text-transform:uppercase;font-size:13px;letter-spacing:.5px}
+#ds .dr{display:flex;align-items:center;gap:12px;margin-top:6px;font-size:18px}
+#ds .dr b{width:30px;height:30px;border:2px solid #fff;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;user-select:none}
+#ds .dst{margin-top:8px;font-size:13px;line-height:1.7}
+#ds .bad{color:#ffb4a8}#ds .lk{text-decoration:underline;cursor:pointer;margin-right:8px;font-weight:700}
+#ds .dbar{display:flex;background:#111}
+#ds .db{flex:1;text-align:center;padding:12px 0;font-size:22px;cursor:pointer;color:#fff}#ds .db.on{background:#fff;color:#111}
+#fab{position:absolute;right:14px;bottom:calc(14px + env(safe-area-inset-bottom,0px));z-index:6;display:flex;flex-direction:column;align-items:flex-end;gap:8px}
+#fb{display:flex;align-items:center;gap:8px;border:2px solid #c9a24b;border-radius:12px;padding:10px 18px;font:700 15px Georgia,'Times New Roman',serif;letter-spacing:2px;text-transform:uppercase;color:#f3e6c4;background:linear-gradient(#4a3524,#2a1d14);box-shadow:0 4px 0 #120c07,0 8px 18px rgba(0,0,0,.45);cursor:pointer}
+#fb:active{transform:translateY(2px);box-shadow:0 2px 0 #120c07}
+#fm{display:grid;grid-template-columns:1fr 1fr;gap:8px;width:252px;padding:14px;border:2px solid #c9a24b;border-radius:16px;background:linear-gradient(rgba(58,40,27,.95),rgba(33,23,16,.95));box-shadow:0 12px 36px rgba(0,0,0,.55),inset 0 0 0 4px rgba(201,162,75,.18);opacity:0;visibility:hidden;transform:translateY(12px) scale(.96);transform-origin:bottom right;pointer-events:none;transition:opacity .18s,transform .18s,visibility .18s}
+#fm.open{opacity:1;visibility:visible;transform:none;pointer-events:auto}
+#fm .ft{grid-column:1/-1;text-align:center;font:700 11px Georgia,serif;letter-spacing:4px;color:#c9a24b;border-bottom:1px solid rgba(201,162,75,.5);padding-bottom:8px;margin-bottom:2px}
+#fm button{display:flex;flex-direction:column;align-items:center;gap:5px;padding:10px 6px;border:1px solid rgba(201,162,75,.45);border-radius:10px;background:rgba(255,235,190,.06);color:#f3e6c4;font:600 12px Georgia,serif;letter-spacing:1px;cursor:pointer;text-align:center;transition:background .15s,transform .15s}
+#fm button:hover{background:rgba(201,162,75,.28);transform:translateY(-2px)}
+#fm button i{font-style:normal;font-size:24px;width:42px;height:42px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:radial-gradient(circle at 30% 30%,#e6c777,#9a7424);box-shadow:inset 0 0 0 2px rgba(0,0,0,.25)}
+#np{position:absolute;inset:0;z-index:9;display:none;align-items:center;justify-content:center;background:rgba(10,8,5,.62);padding:12px}
+#np .paper{position:relative;width:min(560px,100%);max-height:92%;overflow:auto;box-sizing:border-box;background-color:#eee0bd;background-image:radial-gradient(ellipse at 20% 10%,rgba(255,255,255,.4),transparent 60%),repeating-linear-gradient(0deg,rgba(90,60,20,.06) 0 2px,transparent 2px 4px);color:#241a10;border:3px double #3a2a18;outline:2px solid #3a2a18;outline-offset:-10px;padding:24px 26px 18px;box-shadow:0 18px 50px rgba(0,0,0,.6);transform:rotate(-.5deg);font-family:'Old Standard TT',Georgia,'Times New Roman',serif}
+#np .mast{text-align:center;font:400 38px/1.1 'UnifrakturCook','Old English Text MT',Georgia,serif;border-bottom:3px double #241a10;padding:0 30px 8px}
+#np .meta{display:flex;justify-content:space-between;gap:8px;font-size:11px;letter-spacing:1px;text-transform:uppercase;border-bottom:1px solid #241a10;padding:4px 0;margin-bottom:12px}
+#np h2{font:900 30px/1.05 'Playfair Display',Georgia,serif;text-transform:uppercase;margin:6px 0 12px;text-align:center}
+#np .body{column-count:2;column-gap:22px;column-rule:1px solid #241a10;font-size:14px;line-height:1.5;text-align:justify;hyphens:auto}
+#np .body::first-letter{float:left;font:900 42px/.85 'Playfair Display',Georgia,serif;padding:3px 6px 0 0}
+#np .x{position:absolute;top:8px;right:10px;width:32px;height:32px;border:2px solid #241a10;background:#eee0bd;color:#241a10;font:700 16px Georgia,serif;border-radius:50%;cursor:pointer;padding:0}
+#np .ok{display:block;margin:16px auto 0;padding:9px 30px;background:#241a10;color:#eee0bd;border:0;font:700 14px Georgia,serif;letter-spacing:3px;text-transform:uppercase;cursor:pointer}
+@media (max-width:640px),(pointer:coarse){
+ #hud{font-size:13px;gap:6px 12px}
+ .sb{min-width:38px;padding:9px 8px}
+ .mb.sm{padding:11px 14px;font-size:15px}
+ #fb{padding:13px 22px;font-size:16px}
+ #fm{width:280px}#fm button{padding:12px 6px;font-size:13px}
+ #ds .db{padding:16px 0;font-size:24px}#ds .dr b{width:38px;height:38px}
+ #np .body{column-count:1}#np .mast{font-size:30px}#np h2{font-size:24px}
+}
+
+/* ---- dokunmatik ---- */
+*{-webkit-tap-highlight-color:transparent}html{overscroll-behavior:none}
+body{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}input{-webkit-user-select:text;user-select:text}
+button,select,.lk,.db{touch-action:manipulation}button{min-height:40px}
+#mg,#menu,#ov>div,#np .paper,#ds .dm{overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+#tip button{width:38px;height:38px}#np .x{width:42px;height:42px}#ds .dr b{width:42px;height:42px}.sb{min-height:40px;min-width:40px}
+#fm button{min-height:64px}#ds .lk{display:inline-block;padding:8px 4px}
+@media (orientation:landscape) and (max-height:480px){#menu{justify-content:flex-start;gap:8px}#menu h1{font-size:26px}.mb{min-height:46px;padding:8px 18px}#ov>div{max-height:96%}}
+#mg button{cursor:pointer}#mg [data-g^=bm],#mg [data-g^=bp]{min-width:52px;min-height:52px;font-size:22px}
+#mg .card.note{position:sticky;top:66px;z-index:3;background:#fff3c4;border:2px solid #e2431f;font-weight:700}
+/* ---- modern arayüz ---- */
+:root{--sh:0 2px 10px rgba(30,25,60,.14);--rd:14px}
+.mb{border:1.5px solid var(--fg);border-radius:var(--rd);box-shadow:var(--sh);min-width:min(280px,86vw);min-height:54px;padding:14px 22px;font-size:17px;transition:transform .12s}
+.mb:active{transform:scale(.97)}.mb.sm{min-width:0;min-height:44px;border-radius:12px}
+.card{border-radius:var(--rd);box-shadow:var(--sh);padding:14px 16px}
+#menu{gap:14px}#menu h1{font-size:clamp(30px,9vw,44px)}
+#mg{padding:10px 12px 90px;gap:12px}#mg .card{border-radius:var(--rd);line-height:1.8;box-shadow:0 2px 10px rgba(0,0,0,.35)}
+#mg>*{flex-shrink:0}
+#mg .tabs{gap:6px;padding:8px 0;flex:0 0 auto;min-height:62px;box-sizing:border-box;align-items:center;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;scrollbar-width:none}
+#mg .tabs::-webkit-scrollbar{display:none}
+#mg .tabs .mb{flex:1 0 auto;min-height:44px;border-radius:12px 12px 4px 4px;opacity:.72;box-shadow:none;border-width:1.5px}
+#mg .tabs .mb.on{opacity:1;background:#c9a24b;border-bottom:4px solid #e2431f;font-weight:800;transform:translateY(-1px)}
+#ov>div{max-width:min(440px,94vw);border-radius:18px;box-shadow:0 10px 40px rgba(0,0,0,.45);padding:20px}
+#ov button{border-radius:12px;min-height:46px;box-shadow:var(--sh)}
+.yt{width:100%;border-collapse:collapse;font-size:12.5px;margin:8px 0}.yt th{font-size:11px;opacity:.7;border-bottom:1.5px solid var(--road)}
+.yt td,.yt th{padding:6px 4px;text-align:right}.yt td:first-child,.yt th:first-child{text-align:left}.yt tr.me{background:rgba(226,67,31,.15);font-weight:700}
+@media (max-width:640px){body{font-size:15px}#hud{padding:8px 10px}.card{font-size:15px}#mg .tabs .mb{font-size:14px;padding:10px 12px}.yt{font-size:11.5px}}
+</style><link href="https://fonts.googleapis.com/css2?family=UnifrakturCook:wght@700&family=Playfair+Display:wght@700;900&family=Old+Standard+TT&display=swap" rel="stylesheet"></head><body>
+<div id="hud"><span>💰 <b id="mo">0</b> ₺</span><span>👥 <b id="sc">0</b></span><span>📅 <b id="yr">–</b></span><span id="spd"></span></div>
+<div id="tip"><span id="tipt"></span><button id="tipx" title="İpucunu gizle">✕</button></div>
+<div id="wrap"><canvas id="c"></canvas><div id="msg"></div>
+<div id="mg"></div><div id="ds"></div><div id="fab"><div id="fm"></div><button id="fb"></button></div><div id="np"></div><div id="menu"></div><div id="ov" style="display:none"><div id="ovb"></div></div></div>
+<script>
+/* ===== Temel ===== */
+const cv=document.getElementById('c'),ctx=cv.getContext('2d'),$=id=>document.getElementById(id);
+let W,H,sc,ox,oy;
+const LON0=28.58,LON1=29.5,LAT0=40.82,LAT1=41.3,KX=.754;
+function rs(){const d=devicePixelRatio||1,r=cv.getBoundingClientRect();W=r.width;H=r.height;cv.width=W*d;cv.height=H*d;ctx.setTransform(d,0,0,d,0,0);
+ const sw=(LON1-LON0)*KX,sh=LAT1-LAT0;sc=Math.min(W/sw,H/sh)*.97;ox=(W-sw*sc)/2;oy=(H-sh*sc)/2;clampView()}
+addEventListener('resize',rs);
+let VZ=1,VX=0,VY=0;
+const XY0=(lo,la)=>[ox+(lo-LON0)*KX*sc,oy+(LAT1-la)*sc];
+const XY=(lo,la)=>{const[x,y]=XY0(lo,la);return[x*VZ+VX,y*VZ+VY]};
+const fm=n=>Math.round(n).toLocaleString('tr-TR');
+const COL=['#d8432a','#e6a817','#1f4fa3','#14958f','#8a3fa0','#6b8e23','#c2185b'],TY=['c','s','t'];
+
+/* ===== Harita verisi ===== */
+// semt, ilçe, boylam, enlem, mahalleler, cadde
+const ST=[
+["Kadıköy","Kadıköy",29.03,40.99,"Caferağa, Osmanağa","Bahariye Cd."],
+["Taksim","Beyoğlu",28.985,41.037,"Cihangir, Gümüşsuyu","İstiklal Cd."],
+["Bakırköy","Bakırköy",28.87,40.98,"Zeytinlik, Yeşilköy","İncirli Cd."],
+["Üsküdar","Üsküdar",29.02,41.027,"Mimar Sinan, Aziz Mahmud Hüdayi","Hakimiyet-i Milliye Cd."],
+["Sultanahmet","Fatih",28.975,41.007,"Cankurtaran, Sultanahmet","Divan Yolu"],
+["Mecidiyeköy","Şişli",28.995,41.066,"Mecidiyeköy, Gayrettepe","Büyükdere Cd."],
+["Tarabya","Sarıyer",29.055,41.15,"Tarabya, Yeniköy","Büyükdere Cd."],
+["Eyüp","Eyüpsultan",28.93,41.05,"Düğmeciler, Nişanca","Defterdar Cd."],
+["Bağcılar","Bağcılar",28.85,41.04,"Merkez, Güneşli","Mahmutbey Yolu"],
+["Esenyurt","Esenyurt",28.67,41.03,"Kıraç, Cumhuriyet","Doğan Araslı Blv."],
+["Avcılar","Avcılar",28.72,40.98,"Merkez, Cihangir","Üniversite Cd."],
+["Beylikdüzü","Beylikdüzü",28.63,41.0,"Adnan Kahveci, Yakuplu","D-100"],
+["Kayaşehir","Başakşehir",28.8,41.09,"Kayabaşı, Bahçeşehir","TEM Otoyolu"],
+["Halkalı","Küçükçekmece",28.77,41.0,"Halkalı, Sefaköy","Atatürk Cd."],
+["Çağlayan","Kâğıthane",28.97,41.085,"Çağlayan, Gültepe","Kâğıthane Cd."],
+["Gaziosmanpaşa","Gaziosmanpaşa",28.91,41.07,"Karadeniz, Merkez","Gaziosmanpaşa Cd."],
+["Barbaros","Ataşehir",29.12,40.99,"Barbaros, Kayışdağı","Atatürk Cd."],
+["Bağlarbaşı","Maltepe",29.13,40.93,"Bağlarbaşı, Cevizli","Bağdat Cd."],
+["Kartal","Kartal",29.19,40.9,"Soğanlık, Yakacık","Ankara Cd."],
+["Pendik","Pendik",29.24,40.88,"Kaynarca, Yenişehir","Ankara Cd."],
+["Ümraniye","Ümraniye",29.12,41.025,"Atatürk, Çakmak","Alemdağ Cd."],
+["Kanlıca","Beykoz",29.1,41.12,"Çubuklu, Kanlıca","Çubuklu Cd."],
+["Çekmeköy","Çekmeköy",29.2,41.04,"Mimar Sinan, Taşdelen","Çekmeköy Cd."],
+["Samandıra","Sancaktepe",29.23,40.99,"Samandıra, Yenidoğan","Samandıra Cd."],
+["Sultanbeyli","Sultanbeyli",29.27,40.96,"Mehmet Akif, Hasanpaşa","Fatih Cd."],
+["Tuzla","Tuzla",29.3,40.84,"Aydınlı, İçmeler","Tuzla Cd."],
+["Büyükada","Adalar",29.12,40.875,"Merkez, Nizam","Bağdat Cd."]];
+const POPS=[1,1,.7,.8,.9,1,.25,.3,.6,.22,.4,.35,.2,.4,.15,.3,.5,.35,.45,.4,.5,.2,.25,.25,.3,.2,.15];
+const EUR=[[28.5,41.33],[28.67,41.35],[28.95,41.28],[29.04,41.25],[29.08,41.235],[29.06,41.17],[29.055,41.14],[29.04,41.08],[29.027,41.047],[29.007,41.042],[28.99,41.033],[28.974,41.022],[28.965,41.03],[28.95,41.045],[28.93,41.058],[28.922,41.06],[28.935,41.05],[28.95,41.035],[28.965,41.021],[28.985,41.012],[28.96,41.003],[28.92,40.99],[28.87,40.97],[28.82,40.96],[28.78,40.975],[28.72,40.97],[28.6,41.01],[28.5,41.0]];
+const ASIA=[[29.6,41.2],[29.15,41.225],[29.12,41.2],[29.088,41.18],[29.1,41.13],[29.065,41.1],[29.05,41.055],[29.04,41.04],[29.015,41.025],[29.0,41.0],[29.02,40.985],[29.04,40.965],[29.09,40.95],[29.13,40.92],[29.19,40.89],[29.24,40.87],[29.3,40.82],[29.6,40.76]];
+const ROADS=[[[28.7,40.995],[28.85,40.99],[28.92,41.015],[28.99,41.062],[29.03,41.047],[29.04,41.02],[29.09,40.98],[29.18,40.91],[29.4,40.8]],
+[[28.7,41.07],[28.95,41.09],[29.0,41.1],[29.062,41.09],[29.15,41.05],[29.3,40.95],[29.5,40.86]],
+[[29.02,40.985],[29.06,40.965],[29.11,40.93],[29.17,40.9]],
+[[29.032,41.047],[29.042,41.043]],[[29.056,41.088],[29.07,41.092]],[[29.07,41.2],[29.11,41.2]]];
+const LBL=[["Karadeniz",29.2,41.27],["Marmara Denizi",28.95,40.9],["İstanbul Boğazı",29.07,41.12,1],["Haliç",28.9,41.075,1],["E-5",28.78,41.0,1],["TEM",28.75,41.075,1]];
+
+/* ===== Oyun verisi ===== */
+const VEH={
+1:[{n:'Atlı Tramvay',from:1869,v:38,cap:40,cost:20000},{n:'Buharlı Lokomotif',from:1872,v:62,cap:180,cost:120000},{n:'Elektrikli Tramvay',from:1914,v:75,cap:220,cost:160000},{n:'Dizel Motorlu Tren',from:1925,v:95,cap:320,cost:240000}],
+2:[{n:'Hafif Metro Seti',from:2000,v:85,cap:500,cost:280000},{n:'Banliyö Treni',from:2000,v:80,cap:700,cost:320000},{n:'Marmaray Seti',from:2013,v:110,cap:1100,cost:700000}],
+3:[{n:'Modern Metro Seti',from:2026,v:100,cap:800,cost:450000},{n:'Sürücüsüz Metro',from:2028,v:115,cap:1000,cost:650000},{n:'Hızlı Banliyö Seti',from:2031,v:125,cap:1200,cost:800000}]};
+const CO=['Boğaziçi Raylı Sistemler','Anadolu Vagon','Rumeli Makina','Neo Ray Teknoloji'];
+const HIST={1872:'Buharlı lokomotifler İstanbul’a geliyor',1875:'Beyoğlu’nda Tünel açıldı (dünyanın en eski metro hatlarından biri)',1914:'İstanbul’da elektrikli tramvay dönemi başlıyor',2013:'Marmaray açıldı: Boğaz geçişi artık mümkün!'};
+const TRK=[{n:'Atlı Tramvay Rayı',sm:.8,from:1869,cost:0},{n:'Demiryolu (Standart Ray)',sm:1,from:1872,cost:90000},{n:'Elektrikli Hat',sm:1.2,from:1914,cost:160000},{n:'Metro Tüneli',sm:1.35,from:1989,cost:280000},{n:'Sinyalli Sürücüsüz Hat',sm:1.6,from:2020,cost:420000}];
+const REQ={'Atlı Tramvay':0,'Buharlı Lokomotif':1,'Elektrikli Tramvay':2,'Dizel Motorlu Tren':1,'Hafif Metro Seti':3,'Banliyö Treni':1,'Marmaray Seti':2,'Modern Metro Seti':3,'Sürücüsüz Metro':4,'Hızlı Banliyö Seti':2};
+const vreq=v=>v.req!==undefined?v.req:(REQ[v.n]||0);
+const VKIND=['🐎','🚂','🚋','🚇','🤖'],VPAL=['#f3c623','#ffffff','#2b2a4c','#ff7a3d','#3fd0c9','#b57bff'];
+const vacc=v=>v.col||VPAL[[...v.n].reduce((a,c)=>a+c.charCodeAt(0),0)%VPAL.length];
+const MIS=[
+{id:1,n:'1 · Demiryolu Doğuyor (1869)',d:'Osmanlı İstanbul’u, hiç demiryolu yok. 1930’a kadar 1.200 yolcu.',
+ intro:'1869. İstanbul’da henüz demiryolu yok. Atlı tramvaylarla başla; buharlı lokomotifler yolda. Haritada başta hiçbir durak yok: duraklar, kazandığın ihalelerle belirir. Bu dönemde Boğaz’ı geçmek mümkün değil.<br><b>5 adımda ilk hattın:</b><ol><li>≡ Menü → 📜 İhaleler’i aç</li><li>“Beyoğlu–Sultanahmet Hattı” için <b>Teklif ver</b> (teklif yüksekse kazanma şansı artar)</li><li>Sonuç yıl başında gelir; kazanırsan <b>inşaat izni</b> açılır</li><li>Haritada sarı kesikli güzergahı istasyondan istasyona sürükleyerek <b>hat çiz</b></li><li>≡ Menü → Hatlar → <b>+Tren</b> ekle ve yolcuları taşı</li></ol>Yolcular, kendi şeklinden <i>farklı</i> şekilli istasyona gitmek ister.<br><b>Hedef:</b> 1930’a kadar 1.200 yolcu taşı.',
+ goal:1200,money:10000000,start:1869,end:1930,yl:9,veh:1,nocross:9999,init:[],lines:[],pool:[4,1,2,13,0,18,19,3,7],dem:.1,cm:.15,fare:3,mm:.6},
+{id:2,n:'2 · Yeni Binyıl (2000)',d:'Metro çağı başlıyor. 2016’ya kadar 28.000 yolcu.',
+ intro:'2000. Taksim–4. Levent metrosu yeni açıldı; hafif metro ve banliyö hatları çalışıyor. Marmaray henüz proje: Boğaz geçişi 2013’te mümkün olacak. Hatları genişlet, filonu yenile.<br>Yeni hat için önce ≡ Menü › İhaleler bölümünden güzergahın ihalesini kazan.<br><b>Hedef:</b> 2016’ya kadar 28.000 yolcu.',
+ goal:28000,money:10000000,start:2000,end:2016,yl:20,veh:2,nocross:2013,init:[],lines:[[1,5],[4,2,8],[0,17,18,19]],pool:[1,5,4,2,8,0,17,18,19,16,20,7,14,15,10,13,3,12,9,6,11],dem:1,cm:3,fare:15,mm:1},
+{id:3,n:'3 · Günümüz (2026)',d:'Mevcut hatların üstüne kur. 2040’a kadar 55.000 yolcu.',
+ intro:'2026. Marmaray, M2, M4 ve M5 hatları çalışıyor, şehir yeni hatlar bekliyor. Rakip firmalar her yıl yeni araç çıkarıyor: hangi hatta hangi aracı kullanacağına sen karar ver.<br>Yeni hat için önce ≡ Menü › İhaleler bölümünden güzergahın ihalesini kazan.<br><b>Hedef:</b> 2040’a kadar 55.000 yolcu.',
+ goal:55000,money:10000000,start:2026,end:2040,yl:20,veh:3,nocross:0,init:[],lines:[[13,2,4,0,18,19],[4,1,5,6],[0,16,17,18],[3,20,22,24]],pool:ST.map((_,i)=>i),dem:1.15,cm:9,fare:35,mm:1}];
+const PRJ={
+1:[['Rumeli Demiryolu: Sirkeci–Küçükçekmece',[4,2,13],0],['Anadolu Demiryolu: Haydarpaşa–Pendik',[0,18,19],0],['Üsküdar–Kadıköy Atı Tramvayı',[3,0],0],['Beyoğlu–Sultanahmet Hattı',[1,4],0],['Eyüp–Taksim Hattı',[7,1],0]],
+2:[['Kayaşehir Metrosu (Çağlayan–Kayaşehir)',[14,15,12],0],['Esenyurt–Avcılar–Bakırköy Hattı',[9,10,2],0],['Kadıköy–Ataşehir–Ümraniye',[0,16,20],0],['Halkalı–Bakırköy Hattı',[13,2],0],['Kartal–Pendik Hattı',[18,19],0],['Bağcılar–Eyüp',[8,7],0],['Marmaray: Sultanahmet–Kadıköy',[4,0],2013]],
+3:[['Çağlayan–Kayaşehir Metrosu',[14,15,12],0],['Esenyurt–Avcılar–Bakırköy',[9,10,2],0],['Beylikdüzü–Esenyurt',[11,9],0],['Mecidiyeköy–Çağlayan',[5,14],0],['Tarabya–Mecidiyeköy–Taksim',[6,5,1],0],['Ataşehir–Ümraniye–Çekmeköy',[16,20,22],0],['Samandıra–Sultanbeyli',[23,24],0],['Pendik–Tuzla',[19,25],0],['Bağcılar–Eyüp–Çağlayan',[8,7,14],0],['Boğaz Tüneli: Taksim–Üsküdar',[1,3],0],['Sultanahmet–Kadıköy',[4,0],0]]};
+const cmOf=s=>s.m?s.m.cm:1;
+const EV=[
+['Yenikapı’da kazıda tarihi eser çıktı! Arkeoloji masrafı ödendi',s=>{s.money-=80000*cmOf(s)}],
+['Belediyeden ek yatırım desteği geldi!',s=>{s.money+=150000*cmOf(s)}],
+['Bayram yoğunluğu: yolcu akışı arttı!',s=>{s.boost=15}],
+['Maç günü! Bir istasyona taraftar yığıldı',s=>{addP(s.st[Math.random()*s.st.length|0],400)}],
+['Deprem tatbikatı: hat güvenlik kontrolü masrafı ödendi',s=>{s.money-=60000*cmOf(s)}],
+['📜 Makinistler greve gitti!',s=>{const a=s.ln.filter(l=>l.tr.length);if(!a.length)return false;const l=a[Math.random()*a.length|0];l.halt=25;return '📜 Makinistler greve gitti!<br>Hat '+(s.ln.indexOf(l)+1)+' üzerindeki trenler bir süre durdu. Bu arada yolcular istasyonlarda birikiyor; diğer hatları ve kapasiteyi gözden geçir.'}],
+['📜 Festival başladı: şehir yolcu dolu!',s=>{s.boost=20;return '📜 Şehir festivale hazır!<br>Kutlamalar için gelenler raylı sistemi kullanıyor; yolcu akışı bir süre artacak.'}],
+['📜 Seçim öncesi vaat: ulaşıma destek',s=>{s.money+=100000*cmOf(s);return '📜 Seçim öncesi vaat: raylı sisteme destek!<br>Belediye şirkete ek kaynak aktardı (+'+fm(100000*cmOf(s))+' ₺).'}],
+['Turist akını! Bir istasyonda kalabalık var',s=>{addP(s.st[Math.random()*s.st.length|0],300)}]];
+
+/* ===== Durum ===== */
+let S,drag=null,cur=null,playing=false,started=false,tab='lines',note='';
+let npOpen=false,npQ=[],npWas=false;
+let CFG={diff:1,theme:'auto',names:true,tips:true,spi:4},PRG={done:[]};
+try{Object.assign(CFG,JSON.parse(localStorage.getItem('mas-cfg')||'{}'));PRG=JSON.parse(localStorage.getItem('mas-prg'))||PRG}catch(e){}
+const SPDS=[0,1,2,4,8,16];let SPI=CFG.spi>0&&CFG.spi<SPDS.length?CFG.spi:4;
+function sv(){try{localStorage.setItem('mas-cfg',JSON.stringify(CFG));localStorage.setItem('mas-prg',JSON.stringify(PRG))}catch(e){}}
+function theme(){const r=document.documentElement;CFG.theme==='auto'?r.removeAttribute('data-theme'):r.setAttribute('data-theme',CFG.theme)}
+const K=()=>S.m?S.m.cm:1;
+const P=s=>{const[x,y]=XY(s.lon,s.lat);return{x,y}};
+function spd(){return SPDS[SPI]/9}
+
+/* ===== İstasyonlar, mesafe, maliyet ===== */
+function init(){S={st:[],ln:[],money:10000000,score:0,sp:0,ev:45,boost:0,over:false,warn:0,mt:0,tw:0,wc:8,tt:0};[0,1,2].forEach(i=>push(i));msg('')}
+function push(i){const d=ST[i];S.st.push({id:i,name:d[0],ilce:d[1],lon:d[2],lat:d[3],mh:d[4],cd:d[5],asia:d[2]>=29.015&&d[3]<41.15,type:S.st.length<3?TY[S.st.length]:TY[Math.random()*3|0],w:{c:0,s:0,t:0,rival:0},pop:POPS[i]})}
+function addSt(){const pl=S.pool||ST.map((_,i)=>i),used=S.st.map(s=>s.id),c=pl.filter(i=>!used.includes(i)).sort(()=>Math.random()-.5);
+ for(const i of c){const[x,y]=XY0(ST[i][2],ST[i][3]);if(S.st.every(s=>{const[sx,sy]=XY0(s.lon,s.lat);return Math.hypot(sx-x,sy-y)>44})){push(i);return}}}
+function kmD(a,b){const r=Math.PI/180,dl=(b.lon-a.lon)*r,dp=(b.lat-a.lat)*r,x=Math.sin(dp/2)**2+Math.cos(a.lat*r)*Math.cos(b.lat*r)*Math.sin(dl/2)**2;return 12742*Math.asin(Math.sqrt(x))}
+function lineCost(a,b,cross){const pk=cross?200000:150000+50000*(a.pop+b.pop)/2;return Math.round(kmD(a,b)*pk*K()/1000)*1000}
+function stObj(id){const d=ST[id];return{lon:d[2],lat:d[3],pop:POPS[id],asia:d[2]>=29.015&&d[3]<41.15}}
+function svTypes(s){const set=new Set();S.ln.forEach(l=>{if(l.st.includes(s))l.st.forEach(a=>{if(a.type!==s.type)set.add(a.type)})});return[...set]}
+const wt=s=>s.w.c+s.w.s+s.w.t;
+function lim(s){return Math.round((250+900*s.pop)*(1+.4*(s.pl||0))*(S.m&&S.m.dem<1?Math.min(1,S.m.dem*8):1))}
+const over=s=>wt(s)>lim(s);
+function why(s){const ls=S.ln.filter(l=>l.st.includes(s));
+ if(!ls.length)return 'Bu istasyona giden hat yok';
+ if(!svTypes(s).length)return 'Hatta farklı şekilli istasyon yok';
+ const n=ls.reduce((a,l)=>a+l.tr.length,0);
+ if(!n)return 'Hatta tren yok';
+ if(ls.some(l=>l.halt>0))return 'Hatta grev var';
+ return n<2?'Tren yetersiz: ek tren ekle':'Kapasite yetersiz: büyük araç ya da peron';}
+function addP(s,n){if(!n)return;const ts=svTypes(s);ts.forEach(t=>s.w[t]+=n/ts.length)}
+
+/* ===== Araçlar, ray, yıl ===== */
+function av(){return(S.veh||[]).filter(v=>v.from+(S.fp===0&&S.m&&v.from>S.m.start?1:0)<=S.year)}
+function cheap(){return av().sort((a,b)=>a.cost-b.cost)[0]||{n:'Standart',v:70,cap:400,cost:150000,from:0}}
+function defTrk(){return S.m?(S.m.veh===1?0:3):1}
+function nextTrk(l){const n=(l.trk||0)+1;return TRK[n]&&TRK[n].from<=S.year?TRK[n]:null}
+function upc(l){return Math.round(nextTrk(l).cost*(l.st.length-1)*.4*K())}
+function maxT(){const y=S.year||2000;let m=0;TRK.forEach((t,i)=>{if(t.from<=y)m=i});return m}
+function setup(m){S.year=m.start;S.yt=0;S.veh=VEH[m.veh].map(v=>({...v,cost:Math.round(v.cost*m.cm)}));S.pool=m.pool;S.st=[];S.ln=[];
+ [...new Set([...m.init,...m.lines.flat()])].forEach(push);
+ m.lines.forEach(a=>{const l={st:a.map(id=>S.st.find(s=>s.id===id)),tr:[],vm:cheap(),trk:3,fare:m.fare,f0:m.fare};
+  if(new Set(l.st.map(s=>s.type)).size<2)l.st[l.st.length-1].type=TY[(TY.indexOf(l.st[0].type)+1)%3];
+  S.ln.push(l);for(let k=0;k<2;k++)l.tr.push({i:0,p:0,d:1,pax:[],m:l.vm})});
+ S.tn=mkTenders(m);S.permit=new Set()}
+/* Bakım: boş çalışan hatlar daha ucuz (kullanım oranına göre %40–%100) */
+function upkParts(){const k=K()*(S.m&&S.m.mm||1)*FP[S.fp||0].up;let tr=0,tk=0;
+ S.ln.forEach(l=>{const cap=l.tr.reduce((a,r)=>a+(r.m?r.m.cap:400),0)||1,f=.4+.6*Math.min(1,(l.yp||0)/(cap*3));tr+=l.tr.length*1000*f;tk+=((l.trk||0)+1)*800*f});
+ const pl=S.st.reduce((a,s)=>a+((s.pl||0)+(s.sh||0))*1000,0);
+ return{tr:Math.round(tr*k),tk:Math.round(tk*k),pl:Math.round(pl*k)}}
+const upk=()=>{const p=upkParts();return p.tr+p.tk+p.pl};
+const bankrupt=()=>-((S&&S.fp===1)?300000:200000)*Math.max(1,S?K():1)+.1*((S&&S.debt)||0);
+function payUp(){const p=upkParts(),c=p.tr+p.tk+p.pl;S.money-=c;S.ln.forEach(l=>l.yp=0);S.lastMaint=p;
+ msg('🧾 Yıllık bakım: −'+fm(c)+' ₺<br>Trenler '+fm(p.tr)+' · Ray '+fm(p.tk)+' · Peron/ticari alan '+fm(p.pl)+'<br><small>Boş çalışan hatlar daha az bakım maliyeti öder.</small>',8);
+ if(S.money<bankrupt()){S.over=true;ovShow('<h2>İflas!</h2>Şirketin borca battı.<br><button id="go">Tekrar</button> <button id="gm">Menü</button>',()=>start());$('gm').onclick=toMenu}
+ else if(S.money<0)msg('⚠ Bütçe eksiye düştü! Bakım gideri: '+fm(c)+' ₺. Boş hatlara tren ekleme, bilet fiyatını gözden geçir.',7)}
+function yearTick(dt){const m=S.m;if(!m||!S.veh)return;S.yt+=dt;if(S.me===undefined)S.me=0;{const f=S.yt/m.yl;if(f>.33*(S.me+1)&&S.me<2){S.me++;midEv()}}
+ if(S.yt>=m.yl){S.yt=0;S.me=0;S.year++;payUp();tenderYear();const nv=S.veh.filter(v=>v.from===S.year&&!v.ai),t=[];
+  if(HIST[S.year])t.push('📜 '+HIST[S.year]);const ye=yearEnd();t.push('📜 '+ye.hl);if(nv.length)t.push('🆕 Yeni araç: '+nv[0].n);
+  if(!nv.length&&Math.random()<.45){const co=CO[Math.random()*CO.length|0],top=av().sort((a,b)=>b.v-a.v)[0],x={n:co.split(' ')[0]+' '+String.fromCharCode(65+Math.random()*26|0)+S.year%100,from:S.year,v:Math.round(top.v+3+Math.random()*6),cap:Math.round(top.cap*(1+Math.random()*.08)),cost:Math.round(top.cost*(.9+Math.random()*.25)),ai:1,req:vreq(top)};S.veh.push(x);t.push('🏭 '+co+' yeni araç tanıttı: '+x.n+' (hız '+x.v+', kapasite '+x.cap+')')}
+  if(t.length)msg(t.join('<br>'),7);if(!S.over)yearCard(ye.card)}}
+
+
+/* ===== Kişilik, Rakipler, İtibar ===== */
+const FP=[['🔧 İhtiyatlı Mühendis','Bakım ucuz, yeni teknolojiye geçiş yavaş. Sakin ve güvenli.',1,.8,1],
+['🎲 Gözü Kara Girişimci','+%40 kasa, bankadan kredi (faiz %14), daha derin iflas eşiği ama borç riski büyük. Giderler +%15.',1.4,1.15,.9],
+['🤝 Siyasi Bağlantılı','İhale şansı yüksek (+%10-15) ama skandallar sık ve sert (yıllık %12, −450.000 ₺).',1,1,.85],
+['📣 Halkçı','Halk itibarı hızlı artar, bilet politikası itibarını belirler; marjlar dar.',.9,1,1]].map(a=>({n:a[0],d:a[1],mon:a[2],up:a[3],cmp:a[4]}));
+const RV=[{agg:1.3,pr:.7,pax:1,s:'agresif, pahalı ihalelere girer; bakımı kötü'},{agg:.8,pr:1,pax:.9,s:'muhafazakâr, teknolojiye geç kalır'},{agg:1,pr:.5,pax:1.3,s:'halkçı, ucuz bilet; kâr marjı düşük'},{agg:1.1,pr:.8,pax:.8,s:'modern, sürücüsüz sever; deneyimsiz'}];
+const fpHtml=()=>'<div id="fpd" style="margin:8px 0;text-align:left"><b>Kurucu kişiliğini seç:</b><br>'+FP.map((f,i)=>'<button class="mb sm'+((S.fp||0)===i?' on':'')+'" data-fp="'+i+'" title="'+f.d+'">'+f.n+'</button>').join('')+'<br><small>'+FP[S.fp||0].d+'</small></div>';
+const rnd=a=>a[Math.random()*a.length|0],rk=(arr,k)=>arr.slice().sort((a,b)=>b[k]-a[k]);
+const RC=['#3a3f47','#1b2a5c','#7a1f3d','#2f4f4f'],fareR=()=>{const a=S.ln.filter(l=>l.tr.length);return a.length?a.reduce((t,l)=>t+(l.fare||l.f0||25)/(l.f0||25),0)/a.length:1};
+function rivalStep(dt){(S.tn||[]).forEach(p=>{if(p.status!=='open'||!p.rv)return;const n=p.st.length;if(n<2)return;p.rt=p.rt||[{u:0,d:1},{u:n-1,d:-1}];
+ p.rt.forEach(r=>{const o=Math.round(r.u);r.u+=r.d*dt*.12;if(r.u>=n-1){r.u=n-1;r.d=-1}else if(r.u<=0){r.u=0;r.d=1}const w=Math.round(r.u);if(w!==o||r.u===0||r.u===n-1)rStop(p,p.st[w])})})}
+function rStop(p,id){const i=CO.indexOf(p.rv);S.rpx=S.rpx||[];S.rpx[i]=(S.rpx[i]||0)+Math.round(30+Math.random()*60);
+ const s=S.st.find(x=>x.id===id);if(!s||!svTypes(s).length)return;let f=(.1+Math.random()*.1)*(S.agg===S.year?1.6:1)*(S.part>S.year?.4:1),tk=0;
+ TY.forEach(t=>{const x=s.w[t]*f;s.w[t]-=x;tk+=x});s.w.rival=tk;S.rpx[i]+=Math.round(tk)}
+function rivalTrains(){(S.tn||[]).forEach(p=>{if(p.status!=='open'||!p.rv||!p.rt)return;const c=RC[CO.indexOf(p.rv)];
+ p.rt.forEach(r=>{const k=Math.min(p.st.length-2,Math.floor(r.u)),f=r.u-k,[x1,y1]=XY(ST[p.st[k]][2],ST[p.st[k]][3]),[x2,y2]=XY(ST[p.st[k+1]][2],ST[p.st[k+1]][3]);
+  ctx.save();ctx.translate(x1+(x2-x1)*f,y1+(y2-y1)*f);ctx.rotate(Math.atan2(y2-y1,x2-x1));ctx.fillStyle=c;ctx.strokeStyle='#fffaf0';ctx.lineWidth=2;ctx.fillRect(-10,-5,20,10);ctx.strokeRect(-10,-5,20,10);ctx.restore()})})}
+const LN=()=>1000000*K();
+function loanHtml(){if((S.fp||0)!==1)return '';return '<br>🏦 Borç <b>'+fm(S.debt||0)+' ₺</b> · faiz %14/yıl · limit '+fm(5*LN())+' ₺ '+B2('loan','+Kredi',0,1)+B2('repay','Öde',0,1)}
+function loanOp(k){const a=LN(),d=S.debt||0;if(k==='loan'){if(d+a<=5*a){S.debt=d+a;S.money+=a;note='🏦 '+fm(a)+' ₺ kredi çekildi'}else note='Kredi limiti doldu'}else{const x=Math.min(a,d,Math.max(0,S.money));S.debt=d-x;S.money-=x;note=x?'Borç ödendi: '+fm(x)+' ₺':'Ödenecek borç ya da para yok'}}
+function yearCard(h){const was=npOpen?npWas:playing;playing=false;if(npOpen)npWas=false;ovShow(h+'<br><button id="go">Devam</button>',()=>{$('ov').style.display='none';playing=was})}
+function yearEnd(){const R=S.rep=S.rep||{h:0,p:0,b:0},fp=S.fp||0,pax=S.score-(S.ps||0),pf0=S.money-(S.pm===undefined?S.money:S.pm),ex=[];S.ps=S.score;
+ let it=0;if(S.debt>0){it=Math.round(S.debt*.14);S.money-=it;ex.push('🏦 Kredi faizi −'+fm(it)+' ₺')}
+ const pf=pf0-it;S.lastPf=pf;S.pm=S.money;let km=0;S.ln.forEach(l=>{for(let k=1;k<l.st.length;k++)km+=kmD(l.st[k-1],l.st[k])});km=Math.round(km);
+ const base=Math.max(pax,800),P=[{n:'Metro A.Ş. (sen)',pax,pf,km,me:1}];
+ CO.forEach((n,i)=>{const r=RV[i],v=.7+Math.random()*.7,own=(S.tn||[]).filter(t=>t.rv===n&&t.status==='open'),rk=own.reduce((t,q)=>{for(let k=1;k<q.st.length;k++)t+=kmD(stObj(q.st[k-1]),stObj(q.st[k]));return t},0);
+  P.push({n,pax:Math.round(base*r.pax*v*.5+((S.rpx||[])[i]||0)),pf:Math.round(Math.abs(pf||1e6)*r.pr*(.5+Math.random())),km:Math.round(rk||Math.max(km,6)*r.agg*(.6+Math.random()*.8))})});S.rpx=[];
+ const sc={};P.forEach(x=>sc[x.n]=0);['pax','pf','km'].forEach(k=>P.slice().sort((a,b)=>b[k]-a[k]).forEach((x,i)=>sc[x.n]+=4-i));
+ const O=P.slice().sort((a,b)=>sc[b.n]-sc[a.n]),w=O[0],last=O[O.length-1];S.rvs=P;
+ if(pf>0)R.b++;if(pax>0)R.h+=fp===3?2:1;if(S.money<0)R.b-=2;
+ if(fp===3){const fr=fareR();if(S.ln.some(l=>l.tr.length&&(l.fare||l.f0||25)<(l.f0||25)*.7)){R.h++;ex.push('📣 Ucuz bilet: Halk +1 (yolcu artar, kâr düşer)')}if(fr>2){R.h-=2;ex.push('📣 Çok pahalı bilet: Halk −2, talep −%20')}else if(fr>1.5){R.h--;ex.push('📣 Pahalı bilet: Halk −1')}}
+ let hl='Şehir yeni yılı Metro A.Ş. ile karşıladı';
+ if(fp===2&&Math.random()<.12){hl='Rüşvet iddiaları şirketi sarstı';R.p-=2;R.h-=2;S.money-=450000;ex.push('🕵️ Skandal: −450.000 ₺, Halk −2, Siyaset −2')}
+ else if(S.money<0)hl='Metro A.Ş. bataklıkta';else if(fp===3&&R.h>=4&&(R.h>=6||Math.random()<.7))hl='Yolcuların kahramanı';
+ else if(w.me)hl=sc[w.n]-sc[O[1].n]>=3?'Şehirde tek hâkimiyet':'Metro A.Ş. zirvede';else if(last.me)hl='Metro A.Ş. alay konusu: sondan birinci';
+ let rw='';if(w.me){S.money+=250000;R.h++;R.b++;rw='🏆 Birincilik ödülü: <b>+250.000 ₺</b>'}else if(last.me){S.money-=150000;R.h--;rw='⚠ Sonuncu: ceza <b>−150.000 ₺</b>'}
+ R.p=Math.max(-8,Math.min(8,R.p));R.h=Math.max(-10,Math.min(10,R.h));R.b=Math.max(-10,Math.min(10,R.b));
+ const T='<h2 style="margin:0 0 6px">📊 '+(S.year-1)+' Yıl Sonu Raporu</h2><i>“'+hl+'”</i><table class="yt"><tr><th>Şirket</th><th>Yolcu</th><th>Kâr</th><th>Hat km</th><th>Puan</th></tr>'+O.map(x=>'<tr class="'+(x.me?'me':'')+'"><td>'+x.n+'</td><td>'+fm(x.pax)+'</td><td>'+fm(x.pf)+'</td><td>'+x.km+'</td><td>'+sc[x.n]+'</td></tr>').join('')+'</table>'+(rw?'<p>'+rw+'</p>':'<p><small>Bu yıl ödül ya da ceza yok.</small></p>')+ex.map(e=>'<small>'+e+'</small><br>').join('')+'<p>İtibar — Halk <b>'+R.h+'</b> · Siyaset <b>'+R.p+'</b> · İş dünyası <b>'+R.b+'</b></p>'+(Math.random()<.5?letter(w.me):'');
+ return{hl,card:T}}
+function midEv(){if(S.over||npOpen||!playing||['ov','mg','ds'].some(i=>$(i).style.display==='flex'))return;const R=S.rep=S.rep||{h:0,p:0,b:0},was=playing,pf=S.money-(S.pm===undefined?S.money:S.pm),q=Math.random();
+ const done=()=>{$('ov').style.display='none';playing=was},ok=h=>{playing=false;ovShow(h+'<br><button id="go">Tamam</button>',done)},
+ two=(h,a,b,fa,fb)=>{playing=false;ovShow(h+'<br><button id="go">'+a+'</button> <button id="g2">'+b+'</button>',()=>{done();fa()});$('g2').onclick=()=>{done();fb()}};
+ if(S.money<500000*K()&&(S.lastPf||0)<=0&&R.h<3&&S.sndY!==S.year&&S.ln.some(l=>l.tr.length)){S.sndY=S.year;two('<h2>✊ Sendika Uyarısı</h2>Sendika Lideri: “Maaşlar ödenmezse trenler durur!”','💰 Maaş öde (−50.000 ₺)','🎲 Risk al',()=>{S.money-=50000;msg('Sendika yatıştı.',5)},()=>{if(Math.random()<.3){const a=S.ln.filter(l=>l.tr.length),l=a[Math.random()*a.length|0];l.halt=25;R.h--;msg('📜 Makinistler greve gitti!<br>Hat '+(S.ln.indexOf(l)+1)+' durdu.',7)}else msg('Risk tuttu, grev çıkmadı.',5)});return}
+ if(q<.4){const r=rnd(CO);two('<h2>🎩 '+r+' patronu</h2>“Ortak olalım: 300.000 ₺ peşin, istasyonlarında yolcu kapmayalım. Yoksa bu ihalelerden çekil.”','🤝 Ortak ol','🚫 Reddet',()=>{S.money+=300000;R.h--;R.b++;S.part=S.year+2;msg('Ortaklık: +300.000 ₺, rakip iki yıl daha az yolcu çalacak.',6)},()=>{R.p++;S.agg=S.year;msg('Rakip öfkeli; bu yıl istasyonlarından daha çok yolcu çalacak.',6)})}
+ else if(q<.7)ok('<h2>👔 İhale Komisyonu Başkanı</h2>'+(R.p>=0?'“Dosyalarınız bu yıl titizlikle okunuyor.”':'“Evrakınızda eksikler var, sıraya girin.”'));
+ else ok('<h2>👵 Yaşlı yolcu</h2>'+(S.money<0?'“Evladım, borçla metro mu olur… eskiden hesap yapardık.”':(S.fp||0)===3?'“Biletleri ucuz tuttuğun günleri unutmadım.”':'“Eski hatlar iyiydi ama yeni duraklar da fena değil.”'))}
+function letter(win){const R=S.rep||{h:0,p:0,b:0},i=S.rvs?Math.random()*CO.length|0:0,r=RV[i];
+ return '<div class="card" style="text-align:left;font-style:italic;margin:8px 0">✉️ <b>'+CO[i]+' patronundan mektup</b><br>'+(win?'“Bu sefer kazandın ama gelecek sefer… Biz '+r.s.split(';')[0]+' bir şirketiz; iş bitmedi.”':'“Sonunda yenildin. Şehir artık bizim raylarımızı konuşacak. Belki bir gün ortak oluruz.”')+'<br><small style="font-style:normal">'+(FP[S.fp||0].n)+' · İtibar: Halk '+R.h+' · Siyaset '+R.p+' · İş dünyası '+R.b+'</small></div>'}
+
+/* ===== İhaleler ===== */
+function mkTenders(m){return PRJ[m.veh].map(([n,st,from])=>{let est=0;for(let k=1;k<st.length;k++){const a=stObj(st[k-1]),b=stObj(st[k]);est+=lineCost(a,b,a.asia!==b.asia)}
+ const floor=Math.round(est*.08/1000)*1000;return{n,st,from,est,floor:Math.max(1000,floor),bid:Math.round(Math.max(1000,floor)*2.2/1000)*1000,status:'open',fail:0,rv:null,dep:0}})}
+const cmpM=()=>FP[S.fp||0].cmp*(1-.03*((S.rep||{}).p||0)),chance=p=>Math.max(0,Math.min(1,(p.bid/(p.floor*cmpM())-1)/1.5));
+/* Duraklar yalnızca kazanılan ihaleyle haritada belirir */
+function addTenderSt(p){const nw=[];p.st.forEach(id=>{if(!S.st.some(s=>s.id===id)){push(id);nw.push(S.st[S.st.length-1])}});
+ const ss=p.st.map(id=>S.st.find(s=>s.id===id));
+ if(nw.length&&new Set(ss.map(s=>s.type)).size<2){const t=nw[nw.length-1],o=ss.find(s=>s!==t);t.type=TY[(TY.indexOf(o.type)+1)%3]}
+ return nw}
+function tenderYear(){(S.tn||[]).forEach(p=>{if(p.status!=='wait')return;const co=CO[Math.random()*CO.length|0],cmp=p.floor*(1+Math.random()*1.5)*cmpM();
+ if(p.bid>=cmp){p.status='won';p.rv=null;const rest=Math.round(p.bid*.9);S.money-=rest;
+  for(let k=1;k<p.st.length;k++){S.permit.add(p.st[k-1]+'-'+p.st[k]);S.permit.add(p.st[k]+'-'+p.st[k-1])}
+  const nw=addTenderSt(p);
+  msg('📜 İhaleyi kazandın: '+p.n+'<br>İnşaat izni açıldı'+(nw.length?'; yeni duraklar haritada belirdi: '+nw.map(s=>s.name).join(', '):'')+'. Sarı kesikli güzergahı istasyondan istasyona sürükleyerek çiz. Kalan bedel ödendi (−'+fm(rest)+' ₺).',7)}
+ else{p.status='open';p.fail++;p.rv=co;const back=Math.round((p.dep||0)*.6);S.money+=back;p.bid=Math.round(p.bid*1.2/1000)*1000;
+  msg('📜 '+co+' ihaleyi aldı: '+p.n+'<br>Teminatın %60’ı iade edildi (+'+fm(back)+' ₺). Teklifini yükselterek yeniden girebilirsin.',7)}})}
+function permDraw(){if(!S.tn)return;ctx.save();ctx.lineCap='round';ctx.lineJoin='round';
+ S.tn.forEach(p=>{
+  if(p.status==='open'&&p.rv){ctx.setLineDash([]);ctx.strokeStyle=RC[CO.indexOf(p.rv)];ctx.lineWidth=6;ctx.beginPath();p.st.forEach((id,k)=>{const[x,y]=XY(ST[id][2],ST[id][3]);k?ctx.lineTo(x,y):ctx.moveTo(x,y)});ctx.stroke();
+   const[x0,y0]=XY(ST[p.st[0]][2],ST[p.st[0]][3]);ctx.setLineDash([]);ctx.font='italic 10px Georgia,serif';ctx.fillStyle='#777';ctx.textAlign='left';ctx.fillText('🏭 '+p.rv.split(' ')[0],x0+10,y0-10)}
+  if(p.status==='won'){ctx.setLineDash([]);ctx.strokeStyle='rgba(255,250,240,.8)';ctx.lineWidth=10;ctx.beginPath();let pen=false;
+   p.st.forEach(id=>{const s=S.st.find(x=>x.id===id);if(!s){pen=false;return}const q=P(s);if(pen)ctx.lineTo(q.x,q.y);else ctx.moveTo(q.x,q.y);pen=true});ctx.stroke();
+   ctx.setLineDash([6,8]);ctx.strokeStyle='#e6a817';ctx.lineWidth=5;ctx.beginPath();pen=false;
+   p.st.forEach(id=>{const s=S.st.find(x=>x.id===id);if(!s){pen=false;return}const q=P(s);if(pen)ctx.lineTo(q.x,q.y);else ctx.moveTo(q.x,q.y);pen=true});ctx.stroke()}});
+ ctx.restore()}
+
+/* ===== Hat çizme ===== */
+function chk(f,t){const cross=f.asia!==t.asia,km=kmD(f,t),c=lineCost(f,t,cross);let ok=true,tx=S.m?'✅ İhale izni var':'✅ Hazır';
+ if(S.m&&!S.permit.has(f.id+'-'+t.id)){ok=false;tx='📜 İhale izni yok'}
+ else if(cross&&S.m&&S.m.nocross>S.year){ok=false;tx='🚫 Boğaz geçişi yok'}
+ else if(S.money<c){ok=false;tx='💰 Bütçe yetersiz'}
+ return{cross,km,c,ok,tx}}
+const hit=(x,y)=>S.st.find(s=>{const p=P(s);return Math.hypot(p.x-x,p.y-y)<(matchMedia('(pointer:coarse)').matches?38:24)});
+const pt=e=>{const r=cv.getBoundingClientRect();return{x:e.clientX-r.left,y:e.clientY-r.top}};
+const ptrs=new Map();let pan=null,pinch=null;
+function clampView(){VX=Math.min(0,Math.max(W*(1-VZ),VX));VY=Math.min(0,Math.max(H*(1-VZ),VY))}
+function zoomAt(mx,my,nz){nz=Math.max(1,Math.min(6,nz));VX=mx-(mx-VX)*nz/VZ;VY=my-(my-VY)*nz/VZ;VZ=nz;clampView()}
+cv.addEventListener('wheel',e=>{e.preventDefault();const p=pt(e);zoomAt(p.x,p.y,VZ*(e.deltaY<0?1.2:1/1.2))},{passive:false});
+cv.addEventListener('dblclick',()=>{VZ=1;VX=0;VY=0});
+cv.addEventListener('pointerdown',e=>{$('fm').classList.remove('open');const p=pt(e);ptrs.set(e.pointerId,p);
+ if(ptrs.size===2){drag=null;pan=null;const[a,b]=[...ptrs.values()];pinch={d:Math.hypot(a.x-b.x,a.y-b.y)||1,z:VZ};return}
+ const s=(!S.over&&playing)?hit(p.x,p.y):null;
+ if(s)drag={from:s,x:p.x,y:p.y};else pan={x:p.x,y:p.y,vx:VX,vy:VY};
+ cv.setPointerCapture(e.pointerId)});
+cv.addEventListener('pointermove',e=>{const p=pt(e);if(ptrs.has(e.pointerId))ptrs.set(e.pointerId,p);
+ if(pinch&&ptrs.size>=2){const[a,b]=[...ptrs.values()];zoomAt((a.x+b.x)/2,(a.y+b.y)/2,pinch.z*Math.hypot(a.x-b.x,a.y-b.y)/pinch.d);return}
+ if(drag){drag.x=p.x;drag.y=p.y}else if(pan){VX=pan.vx+p.x-pan.x;VY=pan.vy+p.y-pan.y;clampView()}});
+cv.addEventListener('pointercancel',e=>{ptrs.delete(e.pointerId);pinch=null;pan=null;drag=null});
+cv.addEventListener('pointerup',e=>{
+ ptrs.delete(e.pointerId);if(ptrs.size<2)pinch=null;pan=null;
+ if(!drag)return;const p=pt(e),t=hit(p.x,p.y),f=drag.from;drag=null;
+ if(!t)return;
+ if(t===f)return msg('<b>'+f.name+'</b> · '+f.ilce+'<br>Mahalleler: '+f.mh+'<br>Cadde: '+f.cd+'<br>Yoğunluk: %'+Math.round(f.pop*100)+' · Bekleyen: '+fm(wt(f))+' / '+fm(lim(f))+(over(f)||wt(f)>lim(f)*.8?'<br>⚠ '+why(f):''),7);
+ let l=S.ln.find(l=>l.st[0]===f||l.st[l.st.length-1]===f);
+ if(l&&l.st.includes(t))return msg('Bu istasyon zaten hatta');
+ if(!l&&S.ln.length>=7)return msg('En fazla 7 hat');
+ const c=chk(f,t);
+ if(!c.ok){
+  if(c.tx.startsWith('📜'))return msg('📜 Bu güzergah için inşaat izni yok.<br>≡ Menü › İhaleler bölümünden bu iki istasyonu içeren bir ihaleye teklif ver.',7);
+  if(c.tx.startsWith('🚫'))return msg('Bu dönemde Boğaz geçişi mümkün değil (Marmaray 2013’te açıldı)');
+  return msg('Hat maliyeti '+fm(c.c)+' ₺ ('+c.km.toFixed(1)+' km) – bütçe yetersiz');}
+ S.money-=c.c;msg('🏗 '+c.km.toFixed(1)+' km hat inşa edildi: −'+fm(c.c)+' ₺');
+ if(l){if(l.st[0]===f){l.st.unshift(t);l.tr.forEach(r=>r.i++)}else l.st.push(t)}
+ else{const v=cheap(),f0=S.m?S.m.fare:25;S.ln.push({st:[f,t],trk:defTrk(),fare:f0,f0,vm:v,tr:[{i:0,p:0,d:1,pax:[],m:v}]})}});
+
+/* ===== Simülasyon ===== */
+function tnote(t){if(S.tw>0)return;S.tw=18;msg(t,6)}
+function stop(l,r,s){const L=r.ld=r.ld||{c:0,s:0,t:0},w=s.w,f0=l.f0||25,fare=l.fare||f0;
+ const g=Math.floor(L[s.type]);if(g>0){L[s.type]-=g;S.score+=g;S.money+=g*fare;l.yp=(l.yp||0)+g}
+ const ty=new Set(l.st.map(a=>a.type)),ok=Math.max(.2,1-Math.max(0,fare-f0)/(f0*2.4)),cap=r.m?r.m.cap:400;
+ let space=cap-(L.c+L.s+L.t);
+ TY.forEach(t=>{if(t===s.type||!ty.has(t)||space<=0)return;const take=Math.min(Math.floor(w[t]),space);if(take<=0)return;w[t]-=take;const b=Math.floor(take*ok);L[t]+=b;space-=b});
+ const n=L.c+L.s+L.t,li=S.ln.indexOf(l)+1;
+ if(n>=cap*.95){r.emp=0;tnote('🚆 Hat '+li+': tren dolu ('+fm(n)+'/'+fm(cap)+'). Ek tren ya da daha büyük araç gerekli.')}
+ else if(n===0){r.emp=(r.emp||0)+1;if(r.emp===4)tnote('🚆 Hat '+li+': tren boş dolaşıyor. İstasyonlarda yolcu yok ya da hat farklı şekilli istasyonları bağlamıyor.')}
+ else r.emp=0}
+function step(dt){win();yearTick(dt);demand(dt);rivalStep(dt);
+ S.st.forEach(s=>{if(s.sh)S.money+=s.sh*s.pop*350*K()*dt});
+ S.sp+=dt;S.ev-=dt;S.tt+=dt;S.tw-=dt;S.wc-=dt;if(S.boost>0)S.boost-=dt;if(S.mt>0&&(S.mt-=dt)<=0)msg('');
+ if(!S.m&&S.sp>13&&S.st.length<ST.length){S.sp=0;addSt()}
+ if(S.ev<=0){S.ev=35+Math.random()*15;const e=EV[Math.random()*EV.length|0],r=e[1](S);if(r!==false)msg(typeof r==='string'?r:'📜 '+e[0].replace(/^📜 /,''),7)}
+ if(S.wc<=0){const s=S.st.find(x=>wt(x)>lim(x)*.85);if(s){S.wc=25;msg('⚠ '+s.name+' kalabalıklaşıyor: '+why(s),7)}else S.wc=4}
+ if(S.m&&S.m.id===1&&S.score>=20&&!S.tutDone){S.tutDone=1;msg('🎓 İlk yolcuları taşıdın! Artık yeni ihalelerle ağı büyütebilirsin.',7)}
+ S.ln.forEach(l=>{if(l.halt>0){l.halt-=dt;return}
+  l.tr.forEach(r=>{const n=l.st.length;if(r.i+r.d<0||r.i+r.d>=n)r.d=-r.d;
+   const a=P(l.st[r.i]),b=P(l.st[r.i+r.d]),len=Math.hypot(b.x-a.x,b.y-a.y)||1;if(!r.m)r.m=l.vm||cheap();
+   r.p+=(r.m?r.m.v:70)*TRK[l.trk===undefined?1:l.trk].sm*.3*dt/len;
+   if(r.p>=1){r.i+=r.d;r.p=0;stop(l,r,l.st[r.i]);if(r.i+r.d<0||r.i+r.d>=n)r.d=-r.d}})});
+ S.warn=Math.max(0,S.warn+(S.st.some(over)?dt:-dt*.5));
+ if(S.warn>10){S.over=true;const s=S.st.find(over);ovShow('<h2 style="margin:0 0 8px">Hizmet durdu!</h2>'+(s?'<b>'+s.name+'</b> istasyonu fazla kalabalıklaştı.<br><small>Neden: '+why(s)+'</small><br>':'Bir istasyon fazla kalabalıklaştı.<br>')+'Taşınan yolcu: <b>'+fm(S.score)+'</b><br><button id="go">Tekrar oyna</button> <button id="gm">Menü</button>',()=>start());$('gm').onclick=toMenu}}
+function demand(dt){const dm=S.fp===3?(fareR()>2?.8:fareR()<.85?1.2:1):1,m=S.m,k=16*(m&&m.dem||1)*[.8,1,1.3][CFG.diff]*(S.boost>0?1.5:1)*dm;
+ S.st.forEach(s=>{const ts=svTypes(s);if(!ts.length)return;const f=(m&&m.veh===2&&s.pop<.5)?.6:1,n=s.pop*f*k*dt/ts.length;ts.forEach(t=>s.w[t]+=n)})}
+function win(){const m=S.m;if(S.over)return;
+ if(!m){if(S.score>=50000&&!S.fg){S.fg=1;msg('🎯 Serbest mod hedefi tamam: 50.000 yolcu! İstersen devam et.',8)}return}
+ if(S.score>=m.goal){S.over=true;if(!PRG.done.includes(m.id))PRG.done.push(m.id);sv();ovShow('<h2 style="margin:0 0 8px">Bölüm tamamlandı! ⭐</h2>'+m.n+letter(1)+'<br>Yolcu: <b>'+fm(S.score)+'</b> · Yıl: <b>'+S.year+'</b><br><button id="go">Menü</button>',toMenu)}
+ else if(S.year>=m.end){S.over=true;ovShow('<h2 style="margin:0 0 8px">Süre doldu</h2>'+m.end+' yılına kadar '+fm(m.goal)+' yolcuya ulaşamadın ('+fm(S.score)+').'+letter(0)+'<br><button id="go">Tekrar</button> <button id="gm">Menü</button>',()=>start());$('gm').onclick=toMenu}}
+
+/* ===== Çizim ===== */
+const mk=(w,h,f)=>{const c=document.createElement('canvas');c.width=w;c.height=h;f(c.getContext('2d'));return c};
+const WV=mk(28,14,x=>{x.strokeStyle='rgba(255,255,255,.3)';x.lineWidth=1.3;x.beginPath();x.moveTo(0,7);x.quadraticCurveTo(7,0,14,7);x.quadraticCurveTo(21,14,28,7);x.stroke()});
+const LPc=mk(16,16,x=>{x.fillStyle='rgba(120,80,40,.14)';x.beginPath();x.moveTo(8,5);x.lineTo(11,8);x.lineTo(8,11);x.lineTo(5,8);x.fill()});
+let WP,LP;
+function shape(t,x,y,r,f){ctx.fillStyle=f;ctx.strokeStyle=f;ctx.lineCap='round';ctx.beginPath();
+ if(t==='c'){ctx.lineWidth=r*.7;ctx.arc(x,y,r*.7,0,7);ctx.stroke()}
+ else if(t==='s'){ctx.moveTo(x-r*.75,y-r);ctx.lineTo(x+r*.75,y-r);ctx.quadraticCurveTo(x+r*.85,y+r*.1,x+r*.45,y+r);ctx.lineTo(x-r*.45,y+r);ctx.quadraticCurveTo(x-r*.85,y+r*.1,x-r*.75,y-r);ctx.fill()}
+ else{ctx.lineWidth=r*.55;ctx.moveTo(x-r,y);ctx.quadraticCurveTo(x-r*.5,y-r,x,y);ctx.quadraticCurveTo(x+r*.5,y-r,x+r,y);ctx.stroke()}}
+function star(x,y,R){ctx.beginPath();for(let k=0;k<16;k++){const a=Math.PI*k/8-Math.PI/2,r=k%2?R*.74:R;k?ctx.lineTo(x+r*Math.cos(a),y+r*Math.sin(a)):ctx.moveTo(x+r*Math.cos(a),y+r*Math.sin(a))}ctx.closePath()}
+function land(a,c){ctx.beginPath();a.forEach(([lo,la],k)=>{const[x,y]=XY(lo,la);k?ctx.lineTo(x,y):ctx.moveTo(x,y)});ctx.closePath();ctx.fillStyle=c;ctx.fill();ctx.fillStyle=LP;ctx.fill();ctx.lineJoin='round';ctx.strokeStyle='rgba(255,255,255,.4)';ctx.lineWidth=7;ctx.stroke();ctx.strokeStyle='rgba(90,60,30,.5)';ctx.lineWidth=1.6;ctx.stroke()}
+function drawTrain(x,y,ang,color,v){const w=Math.round(20+Math.min(26,Math.sqrt(v.cap||100)*1.2)),h=13,k=vreq(v),ac=vacc(v);
+ ctx.save();ctx.translate(x,y);ctx.rotate(ang);ctx.fillStyle=color;ctx.strokeStyle='#fffaf0';ctx.lineWidth=2.5;ctx.beginPath();
+ if(k===4){ctx.moveTo(-w/2,-h/2);ctx.lineTo(w/2-6,-h/2);ctx.lineTo(w/2,0);ctx.lineTo(w/2-6,h/2);ctx.lineTo(-w/2,h/2);ctx.closePath()}
+ else ctx.roundRect(-w/2,-h/2,w,h,k===3?h/2:k===0?3:5);
+ ctx.fill();ctx.stroke();
+ ctx.fillStyle=ac;ctx.fillRect(-w/2+4,-1.5,w-8,3);
+ ctx.fillStyle='rgba(255,250,240,.9)';for(let q=-w/2+6;q<w/2-8;q+=7)ctx.fillRect(q,-h/2+2.5,3.5,2.5);
+ if(k===1){ctx.fillStyle='#222';ctx.fillRect(w/2-10,-h/2-5,4,5)}
+ if(k===2||k===4){ctx.strokeStyle='#222';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(-3,-h/2);ctx.lineTo(0,-h/2-4);ctx.lineTo(3,-h/2);ctx.stroke()}
+ ctx.restore()}
+function tag(x,y,l1,l2,col){ctx.font='bold 12px Georgia,serif';const w=Math.max(ctx.measureText(l1).width,ctx.measureText(l2).width)+16,h=38,x0=Math.min(Math.max(4,x-w/2),Math.max(4,W-w-4)),y0=Math.max(4,y-h-26);
+ ctx.fillStyle='rgba(243,230,196,.97)';ctx.strokeStyle=col;ctx.lineWidth=2;ctx.beginPath();ctx.roundRect(x0,y0,w,h,6);ctx.fill();ctx.stroke();
+ ctx.textAlign='center';ctx.fillStyle='#241a10';ctx.fillText(l1,x0+w/2,y0+15);ctx.fillStyle=col;ctx.fillText(l2,x0+w/2,y0+31)}
+let lastHud={};
+const setT=(id,t)=>{if(lastHud[id]!==t){lastHud[id]=t;$(id).textContent=t}};
+function draw(){
+ const cs=getComputedStyle(document.documentElement),g=n=>cs.getPropertyValue(n).trim(),fg=g('--fg'),card=g('--card'),ld=g('--land'),t=performance.now()/1000;
+ WP=WP||ctx.createPattern(WV,'repeat');LP=LP||ctx.createPattern(LPc,'repeat');
+ ctx.fillStyle=g('--water');ctx.fillRect(0,0,W,H);
+ ctx.save();ctx.translate((t*6)%28,0);ctx.fillStyle=WP;ctx.fillRect(-28,0,W+56,H);ctx.restore();
+ land(EUR,ld);land(ASIA,ld);
+ const[ax,ay]=XY(29.12,40.875);ctx.beginPath();ctx.ellipse(ax,ay,sc*VZ*.03,sc*VZ*.012,-.4,0,7);ctx.fillStyle=ld;ctx.fill();ctx.strokeStyle='rgba(90,60,30,.5)';ctx.lineWidth=1.6;ctx.stroke();
+ ctx.lineCap='round';ctx.lineJoin='round';
+ ROADS.forEach((r,i)=>{ctx.strokeStyle=i>2?'rgba(90,60,30,.55)':g('--road');ctx.lineWidth=i>2?5:2;ctx.beginPath();r.forEach(([lo,la],k)=>{const[x,y]=XY(lo,la);k?ctx.lineTo(x,y):ctx.moveTo(x,y)});ctx.stroke()});
+ ctx.fillStyle=fg;ctx.globalAlpha=.5;ctx.font='italic 12px Georgia,serif';ctx.textAlign='center';
+ LBL.forEach(([tx,lo,la])=>{const[x,y]=XY(lo,la);ctx.fillText(tx,x,y)});ctx.globalAlpha=1;
+ permDraw();
+ S.ln.forEach((l,i)=>{ctx.beginPath();l.st.forEach((s,k)=>{const p=P(s);k?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y)});
+  ctx.strokeStyle='rgba(255,250,240,.9)';ctx.lineWidth=12;ctx.stroke();ctx.strokeStyle=COL[i];ctx.lineWidth=8;ctx.stroke();
+  ctx.strokeStyle='rgba(255,250,240,.8)';ctx.lineWidth=1.5;ctx.setLineDash([3,7]);ctx.stroke();ctx.setLineDash([])});
+ rivalTrains();let dh=null,dc=null;
+ if(drag){const p=P(drag.from);dh=hit(drag.x,drag.y);if(dh===drag.from)dh=null;dc=dh?chk(drag.from,dh):null;
+  ctx.strokeStyle=dc?(dc.ok?'#2e9a4f':'#d8432a'):fg;ctx.globalAlpha=.75;ctx.setLineDash([2,8]);ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(drag.x,drag.y);ctx.stroke();ctx.setLineDash([]);ctx.globalAlpha=1}
+ S.st.forEach(s=>{const p=P(s),n=wt(s),f=Math.min(1,n/lim(s)),has=svTypes(s).length>0;
+  star(p.x,p.y,20);ctx.fillStyle=card;ctx.fill();ctx.strokeStyle=f>=1&&Math.floor(performance.now()/300)%2?'#d8432a':fg;ctx.lineWidth=2.5;ctx.stroke();
+  shape(s.type,p.x,p.y,8,fg);
+  ctx.textAlign='center';
+  if(CFG.names){ctx.font='bold 10.5px Georgia,serif';ctx.lineWidth=3;ctx.strokeStyle=ld;ctx.strokeText(s.name,p.x,p.y+33);ctx.fillStyle=fg;ctx.fillText(s.name,p.x,p.y+33)}
+  if(has||n>=1){ctx.font='bold 10px Georgia,serif';ctx.fillStyle=f>.8?'#d8432a':fg;ctx.fillText(fm(n),p.x,p.y+44);
+   ctx.fillStyle='rgba(0,0,0,.25)';ctx.fillRect(p.x-18,p.y+48,36,4);ctx.fillStyle=f>.8?'#d8432a':'#14958f';ctx.fillRect(p.x-18,p.y+48,36*f,4);
+   if(f>.8){ctx.font='bold 9.5px Georgia,serif';ctx.lineWidth=3;ctx.strokeStyle=ld;const w=why(s);ctx.strokeText('⚠ '+w,p.x,p.y+63);ctx.fillStyle='#d8432a';ctx.fillText('⚠ '+w,p.x,p.y+63)}}
+  if(f>=1&&Math.floor(performance.now()/300)%2){ctx.strokeStyle='#d8432a';ctx.lineWidth=3;ctx.beginPath();ctx.arc(p.x,p.y,26,0,7);ctx.stroke()}});
+ S.ln.forEach((l,i)=>l.tr.forEach(r=>{const a=P(l.st[r.i]),b=P(l.st[Math.min(Math.max(r.i+r.d,0),l.st.length-1)]),x=a.x+(b.x-a.x)*r.p,y=a.y+(b.y-a.y)*r.p,m=r.m||l.vm||cheap(),L=r.ld||{c:0,s:0,t:0},n=L.c+L.s+L.t,f=Math.min(1,n/(m.cap||400));
+  drawTrain(x,y,Math.atan2(b.y-a.y,b.x-a.x),COL[i],m);
+  ctx.fillStyle='rgba(0,0,0,.35)';ctx.fillRect(x-14,y-17,28,4);ctx.fillStyle=f>.85?'#d8432a':'#2e9a4f';ctx.fillRect(x-14,y-17,28*f,4);
+  ctx.font='9px system-ui';ctx.textAlign='center';ctx.fillStyle=fg;ctx.fillText(fm(n)+(l.halt>0?' ✊':''),x,y-20)}));
+ if(drag&&dh&&dc){const p=P(dh);tag(p.x,p.y,dc.km.toFixed(1)+' km · '+fm(dc.c)+' ₺',dc.tx,dc.ok?'#1f7a3a':'#c0301a')}
+ else if(drag&&S.m&&Math.hypot(drag.x-P(drag.from).x,drag.y-P(drag.from).y)>30)tag(drag.x,drag.y,'Bir istasyona sürükle','İzinli güzergah: sarı kesikli','#7a5a10');
+ if(S.warn>1){ctx.font='bold 14px Georgia,serif';ctx.textAlign='center';ctx.lineWidth=4;ctx.strokeStyle='#fffaf0';const tx='⚠ Hizmet durma riski: '+Math.ceil(10-S.warn)+' sn';ctx.strokeText(tx,W/2,60);ctx.fillStyle='#d8432a';ctx.fillText(tx,W/2,60)}
+ setT('mo',fm(S.money));setT('sc',fm(S.score)+(S.m?' / '+fm(S.m.goal):(S.fg?'':' / 50.000')));setT('yr',dateStr())}
+let last=0;
+function loop(t){const dt=Math.min(.05,(t-last)/1000||0);last=t;if(playing&&!S.over){let r=dt*spd();while(r>1e-6&&!S.over){const d=Math.min(.05,r);step(d);r-=d}}draw();updTip();requestAnimationFrame(loop)}
+
+/* ===== Mesajlar, gazete, ipuçları ===== */
+const FILL=['Şehrin dört bir yanında bu gelişme günün konusu oldu; esnaf ve yolcular yeni düzenden umutlu görünüyor.','Yetkililer, gelişmenin ulaşımı rahatlatacağını ve şehrin çehresini değiştireceğini belirtti.','Kahvehanelerde saatlerce konuşulan haber, İstanbullular arasında hayli heyecan yarattı.','Uzmanlar, bu adımın önümüzdeki yıllarda şirketlerin yatırım kararlarını etkileyeceği görüşünde.'];
+const MAST=['Dersaadet Gazetesi','İstanbul Postası','Günlük İstanbul'],PRICE=['5 Para','50 Kuruş','30 ₺'];
+function dateStr(){const m=S.m;if(!m||S.year===undefined)return '–';const d=Math.min(363,Math.floor((S.yt||0)/m.yl*364));return(Math.floor(d/7)+1)+'. Hafta, '+(d%7+1)+'. Gün – '+S.year}
+function npShow(t){const L=t.split('<br>').map(x=>x.replace(/^(📜|🆕|🏭) ?/,'')),i=S.m?S.m.veh-1:2;
+ $('np').innerHTML=`<div class='paper'><button class='x' data-n='1' title='Kapat'>✕</button><div class='mast'>${MAST[i]}</div><div class='meta'><span>${dateStr()}</span><span>Son Dakika · Ek Baskı</span><span>${PRICE[i]}</span></div><h2>${L[0]}</h2><div class='body'>${L.slice(1).join(' ')+' '+FILL[Math.random()*FILL.length|0]}</div><button class='ok' data-n='1'>Tamam</button></div>`;$('np').style.display='flex'}
+function news(t){if(npOpen){npQ.push(t);return}npOpen=true;npWas=playing;playing=false;npShow(t)}
+function msg(t,d){if(t&&/^(📜|🆕|🏭)/.test(t)){news(t);return}$('msg').innerHTML=t?'<span>'+t+'</span>':'';S.mt=t?(d||5):0}
+$('np').onclick=e=>{if(!e.target.dataset.n)return;const nx=npQ.shift();if(nx){npShow(nx);return}$('np').style.display='none';npOpen=false;playing=npWas&&started&&!S.over};
+function ovShow(h,fn){$('ov').style.display='flex';$('ovb').innerHTML=h;$('go').onclick=fn}
+function tipText(){if(!CFG.tips||S.tipOff||!started||S.over)return '';const m=S.m;
+ if(!m)return(S.ln.length||S.tt>60)?'':'💡 İstasyondan istasyona sürükleyerek hat çiz. Hat, farklı şekilli istasyonları bağlamalı.';
+ const tn=S.tn||[],won=tn.some(p=>p.status==='won'),wait=tn.some(p=>p.status==='wait');
+ if(m.id===1){if(S.tutDone)return '';
+  if(!S.ln.length){
+   if(!S.tenderSeen)return '💡 (1/5) Önce ≡ Menü → 📜 İhaleler’e gir.';
+   if(won)return '💡 (3/5) İzin çıktı! Haritada sarı kesikli güzergahı bir istasyondan diğerine sürükleyerek hat çiz.';
+   if(wait)return '💡 (2/5) Teklif verildi. Sonuç yıl başında açıklanır; sağ üstten oyun hızını artırabilirsin.';
+   return '💡 (2/5) “Beyoğlu–Sultanahmet Hattı” için Teklif ver. Teklif yüksekse kazanma şansı artar.'}
+  if(!S.ln.some(l=>l.tr.length>1))return '💡 (4/5) Tren ekle: ≡ Menü → 🛤 Hatlar → “+Tren”. Daha fazla tren, daha az bekleme.';
+  return '💡 (5/5) Yolcuları taşı: yolcular farklı şekilli istasyona gitmek ister. Hattı yeni istasyonlarla uzat, kalabalığı izle.'}
+ if(m.id===2&&S.tt<500)return won?'💡 İzin çıktı: yeni güzergahı istasyondan istasyona sürükleyerek çiz.':'💡 Yeni hat için ≡ Menü → 📜 İhaleler’e gir; teklifi yükseltmek şansı artırır.';
+ if(m.id===3&&S.tt<500)return S.ln.some(l=>l.tr.length>1)?'💡 Rakiplerin renkli hatlarını izle; ortak istasyonlarda yolcu kaybedebilirsin.':'💡 Hatlarına tren ekle ve bilet fiyatını dengede tut (≡ Menü → 🛤 Hatlar).';
+ if(!S.tenderSeen&&S.tt<150)return '💡 Yeni hat çizmeden önce ≡ Menü → 📜 İhaleler bölümünden güzergahın ihalesini kazan.';
+ return ''}
+let tipLast='';
+function updTip(){const bz=['menu','mg','ds'].some(i=>$(i).style.display==='flex');$('msg').style.visibility=bz?'hidden':'visible';const t=bz?'':tipText();if(t!==tipLast){tipLast=t;$('tip').style.display=t?'flex':'none';$('tipt').textContent=t;rs()}}
+$('tipx').onclick=()=>{if(S)S.tipOff=true};
+
+/* ===== Menü ===== */
+const HOW='<h2 style="margin:0 0 8px">Metro A.Ş. – İstanbul</h2><b>Amaç:</b> Yolcuları, gitmek istedikleri şekle (halka, kalkan, dalga) sahip istasyona taşı.<ol><li>≡ Menü → 📜 İhaleler’e gir</li><li>Bir güzergaha <b>Teklif ver</b></li><li>İzin çıkınca haritada <b>hat çiz</b> (istasyondan istasyona sürükle)</li><li>≡ Menü → Hatlar → <b>+Tren</b></li><li>Yolcuları taşı, para kazan, hattı büyüt</li></ol>Haritayı <b>fare tekerleğiyle</b> (dokunmatikte iki parmakla) yakınlaştır, boş yere sürükleyerek kaydır, çift tıklayarak sıfırla.<br>Bir istasyona <b>dokunursan</b> ilçe, mahalle ve doluluk bilgisini görürsün. Bir istasyon çok dolarsa ve çözmezsen oyun biter.<br><small style="opacity:.7">Harita sadeleştirilmiş çizimdir; mahalle ve cadde bilgileri örnek amaçlıdır.</small><br><button id="go">Tamam</button>';
+function toMenu(){$('ov').style.display='none';menu()}
+function menu(v){playing=false;const m=$('menu');m.style.display='flex';v=v||'main';
+ const B=(a,t,on,sm)=>'<button class="mb'+(on?' on':'')+(sm?' sm':'')+'" data-a="'+a+'">'+t+'</button>';let h='';
+ if(v==='main')h='<h1>🚇 Metro A.Ş.</h1><p>✦ İSTANBUL ✦</p>'+(started&&!S.over?B('resume','▶ Devam Et'):'')+B('camp','📖 Hikaye Modu')+B('free','Serbest Mod')+B('set','Ayarlar')+B('dlc','📁 DLC Klasörü')+B('how','Nasıl Oynanır');
+ else if(v==='camp')h='<h2>📖 Hikaye Modu</h2>'+MIS.map((x,i)=>{const ok=i===0||PRG.done.includes(MIS[i-1].id),dn=PRG.done.includes(x.id);return '<div class="card"><b>'+x.n+(dn?' ⭐':'')+'</b><br><small>'+x.d+'</small><br>'+(ok?B('ms'+i,dn?'Tekrar oyna':'Başla',0,1):'<small>🔒 Önceki görevi bitir</small>')+'</div>'}).join('')+B('main','← Geri');
+ else if(v==='set')h='<h2>Ayarlar</h2><div class="card">Zorluk<br>'+['Kolay','Normal','Zor'].map((t,i)=>B('d'+i,t,CFG.diff===i,1)).join('')+'<br>Tema<br>'+['Otomatik','Açık','Koyu'].map((t,i)=>B('t'+i,t,CFG.theme===['auto','light','dark'][i],1)).join('')+'<br>İstasyon isimleri<br>'+B('nm',CFG.names?'Açık':'Kapalı',CFG.names,1)+'<br>İpuçları<br>'+B('tip',CFG.tips?'Açık':'Kapalı',CFG.tips,1)+'<br>İlerleme<br>'+B('rst','Sıfırla',0,1)+'</div>'+B('main','← Geri');
+ else if(v==='dlc')h='<h2>📁 DLC Klasörü</h2>'+[['📦 Gerçek Hatlar Paketi','M1–M11 ve Marmaray hazır hatlar olarak.'],['🏙️ İzmir Genişlemesi','Körfez, Konak ve Karşıyaka hatları.'],['🏛️ Ankara Başkent Paketi','Kızılay merkezli yeni şehir haritası.']].map(x=>'<div class="card"><b>'+x[0]+'</b><br><small>'+x[1]+'</small><br><small>🔒 Yakında</small></div>').join('')+B('main','← Geri');
+ m.innerHTML=h}
+$('menu').onclick=e=>{const a=e.target.dataset.a;if(!a)return;
+ if(a==='resume'){$('menu').style.display='none';playing=true}
+ else if(a==='free')start(null);
+ else if(a.startsWith('ms'))start(MIS[+a.slice(2)]);
+ else if(a==='how')ovShow(HOW,()=>{$('ov').style.display='none'});
+ else if(['main','camp','set','dlc'].includes(a))menu(a);
+ else{if(a==='nm')CFG.names=!CFG.names;else if(a==='tip')CFG.tips=!CFG.tips;else if(a==='rst')PRG.done=[];else if(a[0]==='d')CFG.diff=+a[1];else if(a[0]==='t')CFG.theme=['auto','light','dark'][+a[1]];sv();theme();menu('set')}};
+function start(m){cur=m===undefined?cur:m;$('menu').style.display='none';$('ov').style.display='none';init();started=true;S.m=cur;
+ if(cur){setup(cur);S.money=cur.money;playing=false;ovShow('<h2 style="margin:0 0 8px">'+cur.n+'</h2>'+cur.intro+fpHtml()+'<br><button id="go">Başla</button>',()=>{$('ov').style.display='none';playing=true});
+  $('ovb').onclick=e=>{const a=e.target.dataset.fp;if(a===undefined)return;S.fp=+a;S.money=Math.round(cur.money*FP[S.fp].mon);$('fpd').outerHTML=fpHtml()}}
+ else playing=true}
+
+/* ===== Yönetim paneli ===== */
+const B2=(a,t,on,big)=>`<button class='mb sm${on?' on':''}${big?' big':''}' data-g='${a}'>${t}</button>`;
+function lineCard(l,i){const nx=nextTrk(l),f0=l.f0||25;
+ return `<div class='card' style='border-left:6px solid ${COL[i]}'><b>Hat ${i+1}</b> · ${l.st.map(s=>s.name).join(' – ')}${l.halt>0?' ✊ grev':''}<br>
+Ray: <b>${TRK[l.trk||0].n}</b> ${nx?B2('up'+i,'⬆ '+nx.n+' ('+fm(upc(l))+' ₺)'):''}<br>
+Araç: <select data-s='${i}'>${av().map(v=>`<option value='${v.n}'${l.vm&&l.vm.n===v.n?' selected':''}>${VKIND[vreq(v)]} ${v.n} · ${fm(v.cost)} ₺ · ${fm(v.cap)} kişi · ray ${vreq(v)+1}+</option>`).join('')}</select> ${B2('bt'+i,'+Tren ('+l.tr.length+'/4)')} ${B2('rn'+i,'♻ Yenile')}<br>
+Bilet: ${B2('fm'+i,'−')} <b>${l.fare||f0} ₺</b> ${B2('fp'+i,'+')} <small>(taban ${f0} ₺; pahalı bilet yolcu kaçırır)</small><br>
+Duraklar: ${l.st.map((s,k)=>B2('rm'+i+'_'+k,'✖ '+s.name)).join('')}</div>`}
+function tndHtml(){if(!S.tn)return `<div class='card'>Serbest Modda ihale yoktur; hatları doğrudan çizebilirsin.</div>`;
+ return `<div class='card'><small>Yeni güzergah için ihaleyi kazanmalısın. Rakipler taban bedelin 1–2,5 katı arasında teklif verir: teklifin yükseldikçe kazanma şansın artar. Teklifin %10’u teminat olarak alınır; kaybedersen teminatın %60’ı iade edilir. Sonuç bir sonraki yıl başında açıklanır.</small></div>`+S.tn.map((p,i)=>{
+  const nm=p.st.map(id=>ST[id][0]).join(' → ');let st;
+  if(S.year<p.from)st=`🔒 ${p.from} yılında açılacak`;
+  else if(p.status==='won')st=`✅ İnşaat izni açık: haritada bu güzergahı çiz.`;
+  else if(p.status==='wait')st=`⏳ Teklif verildi (${fm(p.bid)} ₺), sonuç yıl başında.`;
+  else st=`Teklif: ${B2('bm'+i,'−')} <b>${fm(p.bid)} ₺</b> ${B2('bp'+i,'+')} · Kazanma şansı: <b>%${Math.round(chance(p)*100)}</b> · Teminat: ${fm(p.bid*.1)} ₺<br>${B2('tb'+i,'Teklif ver',0,1)}${p.fail?` <small>(${p.fail} kez kaybedildi${p.rv?' · son kazanan: '+p.rv:''})</small>`:''}`;
+  return `<div class='card'><b>${p.n}</b><br><small>${nm}</small><br>Tahmini inşaat: ${fm(p.est)} ₺ · Taban bedel: ${fm(p.floor)} ₺<br>${st}</div>`}).join('')}
+function mgDraw(){const TB=(a,t)=>B2(a,t,tab===a);
+ let h=`<div class='tabs'>${TB('lines','🛤 Hatlar')}${TB('veh','🚆 Araçlar')}${TB('stops','🚏 Duraklar')}${TB('fin','💰 Mali')}${TB('tnd','📜 İhaleler')}${B2('x','✖ Kapat')}</div>`;
+ if(note)h+=`<div class='card note'>${note}</div>`;
+ if(tab==='lines')h+=S.ln.length?S.ln.map(lineCard).join(''):`<div class='card'>Henüz hat yok. ${S.tn?'Önce <b>📜 İhaleler</b> sekmesinden bir güzergahın ihalesini kazan, sonra':'Haritada'} istasyondan istasyona sürükleyerek hattı inşa et.</div>`;
+ else if(tab==='veh'){h+=`<div class='card'>${B2('dsn','🛠 Yeni Araç Tasarla',0,1)}<br><small>Kendi aracını tasarla; hız, kapasite ve fiyat tasarımına göre belirlenir.</small></div>`+av().map(v=>`<div class='card'><span style='display:inline-block;width:12px;height:12px;border-radius:50%;background:${vacc(v)};border:1px solid #888'></span> ${VKIND[vreq(v)]} <b>${v.n}</b> ${v.custom?'🛠':v.ai?'🏭':''}<br>Hız ${v.v} · Kapasite ${fm(v.cap)} kişi · ${fm(v.cost)} ₺ · Gerekli ray: ${TRK[vreq(v)].n}</div>`).join('');const f=(S.veh||[]).filter(v=>v.from>S.year);if(f.length)h+=`<div class='card'>Yakında: ${f.map(v=>v.n+' ('+v.from+')').join(', ')}</div>`}
+ else if(tab==='stops')h+=S.st.map((s,j)=>`<div class='card'><b>${s.name}</b> · ${s.ilce} · yoğunluk %${Math.round(s.pop*100)} · bekleyen ${fm(wt(s))} / ${fm(lim(s))}${wt(s)>lim(s)*.8?'<br>⚠ '+why(s):''}<br>Peron ${s.pl||0}/3 ${B2('pl'+j,(s.pl||0)<3?'⬆ '+fm(60000*K()*((s.pl||0)+1))+' ₺':'maks')} · Ticari alan ${s.sh||0}/3 ${B2('sh'+j,(s.sh||0)<3?'⬆ '+fm(80000*K()*((s.sh||0)+1))+' ₺':'maks')}<br><small>Peron: kalabalık sınırını artırır. Ticari alan: saniyede gelir getirir.</small></div>`).join('');
+ else if(tab==='fin'){const inc=S.st.reduce((a,s)=>a+(s.sh||0)*s.pop*350*K(),0),p=upkParts(),lm=S.lastMaint;
+  h+=`<div class='card'>Bütçe: <b>${fm(S.money)} ₺</b>${loanHtml()}<br>Tahmini yıllık bakım: <b>${fm(upk())} ₺</b> <small>(trenler ${fm(p.tr)} · ray ${fm(p.tk)} · peron/ticari ${fm(p.pl)})</small>${lm?`<br>Son ödenen: <b>${fm(lm.tr+lm.tk+lm.pl)} ₺</b> <small>(trenler ${fm(lm.tr)} · ray ${fm(lm.tk)} · peron/ticari ${fm(lm.pl)})</small>`:''}<br>Ticari gelir: <b>${fm(inc)} ₺/sn</b><br>Hat: ${S.ln.length} · Tren: ${S.ln.reduce((a,l)=>a+l.tr.length,0)}<br>Taşınan yolcu: <b>${fm(S.score)}</b><br><small>Gelir = taşınan yolcu × bilet fiyatı. Boş çalışan hatların bakımı %60’a kadar ucuzlar. Bütçe ${fm(bankrupt())} ₺ altına düşerse iflas edersin.</small></div>`}
+ else{S.tenderSeen=1;h+=tndHtml()}
+ {const sy=$('mg').scrollTop;$('mg').innerHTML=h;$('mg').scrollTop=sy}}
+function mgClose(){$('mg').style.display='none';if(started&&!S.over)playing=true}
+function openTab(t){if(!started||S.over)return;if($('mg').style.display!=='flex'){if(!playing)return;playing=false;$('mg').style.display='flex'}tab=t;note='';mgDraw()}
+$('mg').onchange=e=>{const i=e.target.dataset.s;if(i!==undefined)S.ln[+i].vm=S.veh.find(v=>v.n===e.target.value)||S.ln[+i].vm};
+$('mg').onclick=e=>{const el=e.target.closest&&e.target.closest('[data-g]'),a=el&&el.dataset.g;if(!a)return;
+ if(a==='x')return mgClose();
+ if(a==='dsn')return openDesign();
+ if(['lines','veh','stops','fin','tnd'].includes(a)){tab=a;note='';$('mg').scrollTop=0;return mgDraw()}
+ if(a==='loan'||a==='repay'){loanOp(a);return mgDraw()}
+ const m=a.match(/^(up|bt|rn|fm|fp|rm|pl|sh|tb|bp|bm)(\d+)(?:_(\d+))?$/);if(!m)return;
+ const k=m[1],i=+m[2],l=S.ln[i],pay=c=>{if(S.money<c){note='Yetersiz bütçe ('+fm(c)+' ₺)';return false}S.money-=c;return true};note='';
+ if(k==='up'){const n=nextTrk(l);if(n&&pay(upc(l))){l.trk=(l.trk||0)+1;note='Ray yükseltildi: '+n.n}}
+ else if(k==='bt'||k==='rn'){const v=l.vm||cheap();
+  if(vreq(v)>(l.trk||0))note='Bu araç için ray en az “'+TRK[vreq(v)].n+'” olmalı';
+  else if(k==='bt'){if(l.tr.length>=4)note='Bu hatta en fazla 4 tren olur';else if(pay(v.cost)){l.tr.push({i:0,p:0,d:1,pax:[],m:v});note=v.n+' filoya katıldı'}}
+  else{const n=l.tr.filter(r=>r.m!==v).length;if(!n)note='Filo zaten bu araçta';else if(pay(Math.round(n*v.cost*.6))){l.tr.forEach(r=>r.m=v);note='Filo yenilendi: '+v.n}}}
+ else if(k==='fm'||k==='fp'){const f0=l.f0||25,sp=Math.max(1,Math.round(f0*.1)),c=l.fare||f0;l.fare=k==='fm'?Math.max(Math.round(f0*.4),c-sp):Math.min(Math.round(f0*2.4),c+sp)}
+ else if(k==='rm'){if(l.st.length<=2)note='Hatta en az 2 durak kalmalı';else{l.st.splice(+m[3],1);l.tr.forEach(r=>{r.i=0;r.p=0;r.d=1});note='Durak hattan çıkarıldı'}}
+ else if(k==='bp'||k==='bm'){const p=S.tn[i],st=Math.max(1000,Math.round(p.floor*.1/1000)*1000);p.bid=Math.max(p.floor,p.bid+(k==='bp'?st:-st))}
+ else if(k==='tb'){const p=S.tn[i];if(S.year<p.from)note='Bu proje henüz açılmadı';else if(p.status!=='open')note='Bu ihale için zaten teklif verildi';else if(S.money<p.bid)note='Teklif tutarı kasanın üzerinde';else{p.dep=Math.round(p.bid*.1);S.money-=p.dep;p.status='wait';note='Teklif verildi: '+fm(p.bid)+' ₺ (teminat '+fm(p.dep)+' ₺ alındı). Sonuç bir sonraki yıl başında; ana ekranda oyun hızını artırabilirsin.'}}
+ else{const s=S.st[i];if((s[k]||0)>=3)note='Azami seviye';else if(pay((k==='pl'?60000:80000)*K()*((s[k]||0)+1))){s[k]=(s[k]||0)+1;note=s.name+(k==='pl'?' peronu':' ticari alanı')+' yükseltildi'}}
+ mgDraw()};
+const FM2=[['lines','🛤','Hatlar'],['veh','🚆','Araçlar'],['dsn','🛠','Araç Tasarla'],['stops','🚏','Duraklar'],['fin','💰','Mali'],['tnd','📜','İhaleler'],['home','🏠','Ana Menü']];
+$('fm').innerHTML=`<div class='ft'>KOMUTA MERKEZİ</div>`+FM2.map(x=>`<button data-t='${x[0]}'><i>${x[1]}</i>${x[2]}</button>`).join('');
+$('fb').innerHTML=`<span style='font-size:20px;line-height:1'>≡</span> Menü`;
+$('fb').onclick=()=>$('fm').classList.toggle('open');
+function fabShow(v){$('fab').style.display=v?'flex':'none'}
+$('fm').onclick=e=>{const b=e.target.closest('[data-t]');if(!b)return;const t=b.dataset.t;$('fm').classList.remove('open');
+ if(t==='home'){$('mg').style.display='none';$('ds').style.display='none';fabShow(1);menu();return}
+ if(t==='dsn')return openDesign();
+ openTab(t)};
+function spdUI(){$('spd').innerHTML=SPDS.map((x,i)=>`<button class='sb${i===SPI?' on':''}' data-i='${i}' title='${i?'Oyun hızı: '+x+'×':'Duraklat'}'>${i?x+'×':'⏸'}</button>`).join('')}
+$('spd').onclick=e=>{const i=e.target.dataset.i;if(i===undefined)return;SPI=+i;if(SPI>0){CFG.spi=SPI;sv()}spdUI()};
+
+/* ===== Araç tasarımı ===== */
+const WD=[2.0,2.2,2.4,2.65,2.9,3.2],TECH=['Atlı (at gücü)','Buharlı','Elektrikli','Metro seti','Sürücüsüz'],DCOL=['#d8432a','#e6a817','#1f4fa3','#14958f','#8a3fa0','#444'],BASEV=[38,62,75,100,125],WREQ=[0,0,1,2,3,3];
+let D={name:'Prototip',wg:2,wd:2,se:80,st:160,pw:3,tech:0,col:0,tab:'body',note:'',lastV:null};
+function dsStats(){const A=D.wg*WD[D.wd]*18,used=D.se*.45+D.st*.22;return{A,used,ok:used<=A*.92,req:Math.max(D.tech,WREQ[D.wd]),cap:Math.max(20,D.se+D.st),v:Math.round(BASEV[D.tech]*(.8+.08*D.pw)*(1-.03*(D.wg-1))),cost:K()*1000*Math.round(D.wg*(25+D.tech*20)*(.8+D.wd*.1)+D.se*.8+D.st*.25+D.pw*12*D.wg)}}
+function dsSvg(){const h=30+D.wd*7,wl=Math.min(86,380/D.wg-6),x0=(430-D.wg*(wl+4))/2+14;let s='';
+ for(let i=0;i<D.wg;i++){const x=x0+i*(wl+4);s+=`<rect x='${x}' y='${130-h}' width='${wl}' height='${h}' rx='8' fill='${DCOL[D.col]}' stroke='#fff' stroke-width='2'/>`;
+  const nw=Math.max(1,Math.min(7,Math.round(D.se/D.wg/5))),ww=(wl-16)/nw;for(let k=0;k<nw;k++)s+=`<rect x='${x+8+k*ww}' y='${138-h}' width='${ww-4}' height='${h*.35}' rx='3' fill='#bfe3ff'/>`;
+  s+=`<circle cx='${x+14}' cy='134' r='5' fill='#222'/><circle cx='${x+wl-14}' cy='134' r='5' fill='#222'/>`;
+  if(D.tech>=2)s+=`<path d='M${x+wl/2-8} ${130-h} l8 -12 l8 12' stroke='#fff' fill='none' stroke-width='2'/>`}
+ if(D.tech===0)s+=`<text x='${x0-30}' y='128' font-size='26'>🐎</text>`;
+ s+=`<rect x='10' y='139' width='410' height='3' fill='#fff'/>`;
+ return `<svg viewBox='0 0 430 160' style='width:100%;max-width:460px'>${s}</svg>`}
+function openDesign(){if(!started||S.over)return;if(!S.veh){msg('Araç tasarımı Hikaye Modu’nda kullanılır');return}$('mg').style.display='none';playing=true;dsOpen()}
+function dsOpen(){if(!playing)return;playing=false;D.tech=Math.min(D.tech,maxT());D.note='';D.tab='body';D.lastV=null;$('ds').style.display='flex';fabShow(0);dsDraw()}
+function dsDraw(){const s=dsStats(),yr=S.year||2000;
+ const L=(lbl,k,txt)=>`<div class='dl'>${lbl}<div class='dr'><b data-d='${k}:-1'>−</b><span>${txt}</span><b data-d='${k}:1'>+</b></div></div>`;let left='';
+ if(D.tab==='body')left=L('Vagon sayısı','wg',D.wg)+L('Genişlik','wd',WD[D.wd]+' m')+L('Koltuk sayısı','se',D.se)+L('Ayakta yolcu','st',D.st);
+ else if(D.tab==='mot')left=L('Teknoloji','tech',TECH[D.tech])+L('Motor gücü','pw',D.pw)+`<small>${TRK[D.tech].from+' yılından beri mevcut'}</small>`;
+ else if(D.tab==='col')left=`<div class='dl'>Boya</div><div class='dr' style='flex-wrap:wrap'>${DCOL.map((c,i)=>`<i data-d='col:${i}' style='display:inline-block;width:34px;height:34px;border-radius:50%;background:${c};border:3px solid ${D.col===i?'#fff':'transparent'};cursor:pointer'></i>`).join('')}</div>`;
+ else left=`<div class='dl'>Gerekli ray: <b>${TRK[s.req].n}</b></div>`+TRK.map((t,i)=>`<div class='dl'>${i>=s.req?'✓':'✗'} ${t.n}${t.from>yr?' <small>(henüz yok)</small>':''}</div>`).join('')+S.ln.map((l,i)=>`<div class='dl'>Hat ${i+1}: ${(l.trk||0)>=s.req?'✓ uyumlu':'✗ '+(nextTrk(l)?`<span class='lk' data-d='ru:${i}'>⬆ ${nextTrk(l).n} (${fm(upc(l))}₺)</span>`:'yükseltilemiyor')}</div>`).join('');
+ const T=(k,ic)=>`<span class='db${D.tab===k?' on':''}' data-d='tab:${k}'>${ic}</span>`;
+ const asg=D.lastV?`<div class='dst'>Hemen bir hatta ata (+1 tren): ${S.ln.length?S.ln.map((l,i)=>`<span class='lk' data-d='as:${i}'>Hat ${i+1}</span>`).join(''):'<small>henüz hat yok</small>'}</div>`:'';
+ $('ds').innerHTML=`<div class='dh'><span>${fm(S.money)} ₺ | <input data-n value='${D.name}' maxlength='18'></span></div>
+<div class='dm'><div class='dleft'>${left}</div><div class='dc'>${dsSvg()}<div class='dst'>${D.se} koltuk + ${D.st} ayakta yolcu<br>Kapasite: <b>${s.cap}</b> · Hız: <b>${s.v}</b> · Fiyat: <b>${fm(s.cost)} ₺</b><br>Gerekli ray: <b>${TRK[s.req].n}</b><br>Zemin: ${s.used.toFixed(0)} / ${(s.A*.92).toFixed(0)} ${s.ok?'':`<b class='bad'>aşırı dolu!</b>`}</div>${D.note?`<div class='dst'>${D.note}</div>`:''}${asg}</div></div>
+<div class='dbar'><span class='db' data-d='back:0'>‹</span>${T('body','📐')}${T('col','🎨')}${T('mot','⚙')}${T('ray','🛤')}<span class='db' data-d='save:0'>✓</span></div>`}
+$('ds').oninput=e=>{if(e.target.dataset.n!==undefined)D.name=e.target.value.replace(/[^A-Za-z0-9ÇçĞğİıÖöŞşÜü -]/g,'')};
+$('ds').onclick=e=>{const t=e.target.closest('[data-d]');if(!t)return;const[k,v]=t.dataset.d.split(':'),n=+v,yr=S.year||2000;D.note='';
+ if(k==='back'){$('ds').style.display='none';fabShow(1);if(started&&!S.over)playing=true;return}
+ if(k==='tab')D.tab=v;
+ else if(k==='wg')D.wg=Math.min(6,Math.max(1,D.wg+n));
+ else if(k==='wd')D.wd=Math.min(5,Math.max(0,D.wd+n));
+ else if(k==='se')D.se=Math.min(400,Math.max(0,D.se+n*10));
+ else if(k==='st')D.st=Math.min(1200,Math.max(0,D.st+n*20));
+ else if(k==='pw')D.pw=Math.min(5,Math.max(1,D.pw+n));
+ else if(k==='tech'){const t2=D.tech+n;if(t2>=0&&t2<5){if(TRK[t2].from<=yr)D.tech=t2;else D.note='Bu teknoloji henüz geliştirilmedi ('+TRK[t2].from+')'}}
+ else if(k==='col')D.col=n;
+ else if(k==='ru'){const l=S.ln[n],nx=nextTrk(l);if(nx){const c=upc(l);if(S.money<c)D.note='Yetersiz bütçe';else{S.money-=c;l.trk=(l.trk||0)+1;D.note='Ray yükseltildi: '+nx.n}}}
+ else if(k==='as'){const l=S.ln[n],vv=D.lastV;if(l&&vv){
+  if(vreq(vv)>(l.trk||0))D.note='Hat '+(n+1)+' rayı bu araç için yetersiz: 🛤 sekmesinden yükselt';
+  else{l.vm=vv;if(l.tr.length<4&&S.money>=vv.cost){S.money-=vv.cost;l.tr.push({i:0,p:0,d:1,pax:[],m:vv});D.note='✓ Hat '+(n+1)+' artık '+vv.n+' kullanıyor, 1 tren eklendi (−'+fm(vv.cost)+' ₺)'}else D.note='✓ Hat '+(n+1)+' aracı '+vv.n+' oldu (tren eklenemedi: bütçe ya da 4 tren sınırı)'}}}
+ else if(k==='save'){const s=dsStats();
+  if(!s.ok)D.note='Zemin alanı aşıldı: koltuk veya ayakta sayısını azalt';
+  else if(S.money<80000)D.note='Tasarım ücreti 80.000 ₺';
+  else{S.money-=80000;const b=D.name||'Prototip';let nm=b,c=1;while(S.veh.some(x=>x.n===nm))nm=b+' '+(++c);
+   const nv={n:nm,from:S.year,v:s.v,cap:s.cap,cost:s.cost,req:s.req,custom:1,col:DCOL[D.col]};S.veh.push(nv);D.lastV=nv;D.note='✓ '+nm+' kaydedildi (−80.000 ₺). Aşağıdan hemen bir hatta atayabilirsin.'}}
+ dsDraw()};
+
+/* ===== Başlangıç ===== */
+rs();init();theme();spdUI();requestAnimationFrame(loop);menu();
+
+/* ===== Mobil / Android köprüsü ===== */
+document.addEventListener('contextmenu',e=>e.preventDefault());
+{let lt=0,lx=0,ly=0;cv.addEventListener('pointerup',e=>{if(e.pointerType!=='touch'||pinch)return;const p=pt(e),n=performance.now();
+ if(!hit(p.x,p.y)&&n-lt<320&&Math.hypot(p.x-lx,p.y-ly)<30){VZ=1;VX=0;VY=0;lt=0}else{lt=n;lx=p.x;ly=p.y}})}
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&started&&!S.over&&playing){playing=false;menu()}});
+addEventListener('orientationchange',()=>setTimeout(rs,250));
+window.__back=()=>{if($('np').style.display==='flex'||$('np').style.display==='block')return false;
+ if($('ov').style.display==='flex'){$('ov').style.display='none';return true}
+ if($('ds').style.display==='flex'){$('ds').style.display='none';playing=true;fabShow(1);return true}
+ if($('mg').style.display==='flex'){mgClose();return true}
+ if($('menu').style.display==='flex'){if(started&&!S.over){$('menu').style.display='none';playing=true;return true}return false}
+ if(started&&!S.over){playing=false;menu();return true}return false};
+</script></body></html>
